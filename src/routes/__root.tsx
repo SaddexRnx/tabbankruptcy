@@ -77,14 +77,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Beau-T Spa Lounge" },
-      { name: "description", content: "Beauty salon and spa website for Beau-T Spa Lounge in Al Gharrafa, Doha." },
+      { title: "Beau-T Spa Lounge — Salon & Spa in Doha" },
+      { name: "description", content: "Beau-T Spa Lounge in Al Gharrafa, Doha. Hair styling, Thai massage, facials, manicure & pedicure. Book your appointment — open until 9 PM." },
       { name: "author", content: "Beau-T Spa Lounge" },
-      { property: "og:title", content: "Beau-T Spa Lounge" },
-      { property: "og:description", content: "Beauty salon and spa in Al Gharrafa, Doha." },
+      { property: "og:title", content: "Beau-T Spa Lounge — Salon & Spa in Doha" },
+      { property: "og:description", content: "Beau-T Spa Lounge in Al Gharrafa, Doha. Hair styling, Thai massage, facials, manicure & pedicure. Book your appointment — open until 9 PM." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "Beau-T Spa Lounge — Salon & Spa in Doha" },
+      { name: "twitter:description", content: "Beau-T Spa Lounge in Al Gharrafa, Doha. Hair styling, Thai massage, facials, manicure & pedicure. Book your appointment — open until 9 PM." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/8e2093ce-7034-4efc-8336-6df65df28a38/id-preview-ff32d664--295c8ef7-f5e5-4fab-9a04-1e3fce529fb5.lovable.app-1784826361092.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/8e2093ce-7034-4efc-8336-6df65df28a38/id-preview-ff32d664--295c8ef7-f5e5-4fab-9a04-1e3fce529fb5.lovable.app-1784826361092.png" },
     ],
     links: [
       {

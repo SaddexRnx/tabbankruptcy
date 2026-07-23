@@ -33,10 +33,10 @@ export const Route = createFileRoute("/")({
         content:
           "Beau-T Spa Lounge in Al Gharrafa, Doha. Hair styling, Thai massage, facials, manicure & pedicure. Book your appointment — open until 9 PM.",
       },
-      { property: "og:title", content: "Beau-T Spa Lounge — Doha" },
+      { property: "og:title", content: "Beau-T Spa Lounge — Salon & Spa in Doha" },
       {
         property: "og:description",
-        content: "Luxury beauty salon & spa in Al Gharrafa, Doha. Book online — call XXXXXXXXX.",
+        content: "Beau-T Spa Lounge in Al Gharrafa, Doha. Hair styling, Thai massage, facials, manicure & pedicure. Book your appointment — open until 9 PM.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
