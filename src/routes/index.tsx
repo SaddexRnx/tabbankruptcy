@@ -78,12 +78,12 @@ const services = [
 
 const reviews = [
   {
-    name: "Aljazi Almannai",
+    name: "Local Client",
     body: "Perfect hair treatment with special thai massage. A truly beautiful experience.",
     stars: 5,
   },
   {
-    name: "Abhakorn Romsabai",
+    name: "Local Client",
     body: "New Salon in Gharafa. It's clean and relaxing. Lovely staff 🇶🇦",
     stars: 5,
   },
