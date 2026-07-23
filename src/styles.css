@@ -19,6 +19,10 @@
  */
 
 @theme inline {
+  --font-serif: "Cormorant Garamond", serif;
+  --font-sans: "Inter", sans-serif;
+  --color-gold: var(--gold);
+  --color-rose: var(--rose);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
