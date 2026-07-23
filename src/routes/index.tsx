@@ -10,13 +10,17 @@ import gm7 from "../assets/gmaps/beau-t-7.jpg.asset.json";
 import gm8 from "../assets/gmaps/beau-t-8.jpg.asset.json";
 import gm9 from "../assets/gmaps/beau-t-9.jpg.asset.json";
 import gm10 from "../assets/gmaps/beau-t-10.jpg.asset.json";
+import serviceHair from "../assets/service-hair.jpg";
+import serviceMassage from "../assets/service-massage.jpg";
+import serviceNails from "../assets/service-nails.jpg";
+import serviceFacial from "../assets/service-facial.jpg";
 const gmapsPhotos = [gm1, gm2, gm3, gm4, gm5, gm6, gm7, gm8, gm9, gm10].map((a) => a.url);
 const salonPhotos = {
   hero: gm1.url,
-  hair: gm1.url,
-  massage: gm6.url,
-  nails: gm5.url,
-  facial: gm10.url,
+  hair: serviceHair,
+  massage: serviceMassage,
+  nails: serviceNails,
+  facial: serviceFacial,
   story: gm7.url,
 };
 
