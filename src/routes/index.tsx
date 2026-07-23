@@ -143,9 +143,9 @@ function Index() {
           </nav>
           <a
             href="#book"
-            className="shrink-0 rounded-full bg-primary px-4 py-2 text-[10px] uppercase tracking-widest text-primary-foreground transition hover:opacity-90 sm:px-5 sm:text-xs"
+            className="shrink-0 rounded-full bg-primary px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.14em] text-primary-foreground transition hover:opacity-90 sm:px-4 sm:py-2 sm:tracking-widest"
           >
-            Book Now
+            Book
           </a>
         </div>
       </header>
