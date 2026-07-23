@@ -5,6 +5,17 @@ import hairImg from "../assets/hair.jpg";
 import massageImg from "../assets/massage.jpg";
 import nailsImg from "../assets/nails.jpg";
 import facialImg from "../assets/facial.jpg";
+import gm1 from "../assets/gmaps/beau-t-1.jpg.asset.json";
+import gm2 from "../assets/gmaps/beau-t-2.jpg.asset.json";
+import gm3 from "../assets/gmaps/beau-t-3.jpg.asset.json";
+import gm4 from "../assets/gmaps/beau-t-4.jpg.asset.json";
+import gm5 from "../assets/gmaps/beau-t-5.jpg.asset.json";
+import gm6 from "../assets/gmaps/beau-t-6.jpg.asset.json";
+import gm7 from "../assets/gmaps/beau-t-7.jpg.asset.json";
+import gm8 from "../assets/gmaps/beau-t-8.jpg.asset.json";
+import gm9 from "../assets/gmaps/beau-t-9.jpg.asset.json";
+import gm10 from "../assets/gmaps/beau-t-10.jpg.asset.json";
+const gmapsPhotos = [gm1, gm2, gm3, gm4, gm5, gm6, gm7, gm8, gm9, gm10].map((a) => a.url);
 
 export const Route = createFileRoute("/")({
   head: () => ({
