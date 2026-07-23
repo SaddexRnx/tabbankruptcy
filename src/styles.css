@@ -23,6 +23,10 @@
   --font-sans: "Inter", sans-serif;
   --color-gold: var(--gold);
   --color-rose: var(--rose);
+  --color-cream: var(--cream);
+  --color-linen: var(--linen);
+  --color-shell: var(--shell);
+  --color-salon-ink: var(--salon-ink);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -67,42 +71,47 @@
 
 :root {
   --radius: 0.5rem;
-  /* Palette matched to the salon: crisp near-white walls, true black accents,
-     soft white boucle. Monochrome, minimal, no warm coffee tint. */
-  --background: oklch(0.99 0.002 250);
-  --foreground: oklch(0.14 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.14 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.14 0 0);
-  --primary: oklch(0.14 0 0);
-  --primary-foreground: oklch(0.99 0.002 250);
-  --secondary: oklch(0.96 0.003 250);
-  --secondary-foreground: oklch(0.2 0 0);
-  --muted: oklch(0.955 0.003 250);
-  --muted-foreground: oklch(0.5 0.005 250);
-  --accent: oklch(0.14 0 0);
-  --accent-foreground: oklch(0.99 0.002 250);
+  /* Beau-T salon palette: white cream walls, warm porcelain floors,
+     soft linen furniture and clean black details. */
+  --background: oklch(0.982 0.012 88);
+  --foreground: oklch(0.18 0.006 80);
+  --card: oklch(0.998 0.004 88);
+  --card-foreground: oklch(0.18 0.006 80);
+  --popover: oklch(0.998 0.004 88);
+  --popover-foreground: oklch(0.18 0.006 80);
+  --primary: oklch(0.17 0.004 80);
+  --primary-foreground: oklch(0.982 0.012 88);
+  --secondary: oklch(0.945 0.018 88);
+  --secondary-foreground: oklch(0.22 0.008 80);
+  --muted: oklch(0.935 0.016 88);
+  --muted-foreground: oklch(0.48 0.016 78);
+  --accent: oklch(0.86 0.033 84);
+  --accent-foreground: oklch(0.18 0.006 80);
   --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.99 0.002 250);
-  --border: oklch(0.9 0.003 250);
-  --input: oklch(0.9 0.003 250);
-  --ring: oklch(0.3 0.005 250);
-  --gold: oklch(0.14 0 0);
-  --rose: oklch(0.82 0.03 20);
+  --destructive-foreground: oklch(0.982 0.012 88);
+  --border: oklch(0.86 0.018 88);
+  --input: oklch(0.86 0.018 88);
+  --ring: oklch(0.38 0.02 80);
+  --gold: oklch(0.46 0.035 80);
+  --rose: oklch(0.83 0.035 55);
+  --cream: oklch(0.982 0.012 88);
+  --linen: oklch(0.945 0.018 88);
+  --shell: oklch(0.998 0.004 88);
+  --salon-ink: oklch(0.17 0.004 80);
+  --shadow-soft: 0 24px 70px -45px color-mix(in oklab, var(--salon-ink) 34%, transparent);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.99 0.002 250);
-  --sidebar-foreground: oklch(0.14 0 0);
-  --sidebar-primary: oklch(0.14 0 0);
-  --sidebar-primary-foreground: oklch(0.99 0.002 250);
-  --sidebar-accent: oklch(0.96 0.003 250);
-  --sidebar-accent-foreground: oklch(0.14 0 0);
-  --sidebar-border: oklch(0.9 0.003 250);
-  --sidebar-ring: oklch(0.3 0.005 250);
+  --sidebar: oklch(0.982 0.012 88);
+  --sidebar-foreground: oklch(0.18 0.006 80);
+  --sidebar-primary: oklch(0.17 0.004 80);
+  --sidebar-primary-foreground: oklch(0.982 0.012 88);
+  --sidebar-accent: oklch(0.945 0.018 88);
+  --sidebar-accent-foreground: oklch(0.18 0.006 80);
+  --sidebar-border: oklch(0.86 0.018 88);
+  --sidebar-ring: oklch(0.38 0.02 80);
 }
 
 .dark {
@@ -141,6 +150,10 @@
 }
 
 @layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
   * {
     border-color: var(--color-border);
   }
@@ -149,6 +162,15 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
   }
+}
+
+@utility salon-hero-scrim {
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--background) 88%, transparent) 0%,
+    color-mix(in oklab, var(--background) 56%, transparent) 36%,
+    color-mix(in oklab, var(--background) 92%, transparent) 100%
+  );
 }
 
 /* Hide Lovable badge */
