@@ -1,10 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import heroImg from "../assets/hero.jpg";
-import hairImg from "../assets/hair.jpg";
-import massageImg from "../assets/massage.jpg";
-import nailsImg from "../assets/nails.jpg";
-import facialImg from "../assets/facial.jpg";
 import gm1 from "../assets/gmaps/beau-t-1.jpg.asset.json";
 import gm2 from "../assets/gmaps/beau-t-2.jpg.asset.json";
 import gm3 from "../assets/gmaps/beau-t-3.jpg.asset.json";
@@ -16,11 +11,19 @@ import gm8 from "../assets/gmaps/beau-t-8.jpg.asset.json";
 import gm9 from "../assets/gmaps/beau-t-9.jpg.asset.json";
 import gm10 from "../assets/gmaps/beau-t-10.jpg.asset.json";
 const gmapsPhotos = [gm1, gm2, gm3, gm4, gm5, gm6, gm7, gm8, gm9, gm10].map((a) => a.url);
+const salonPhotos = {
+  hero: gm1.url,
+  hair: gm1.url,
+  massage: gm6.url,
+  nails: gm5.url,
+  facial: gm10.url,
+  story: gm7.url,
+};
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Beau-T Spa Lounge — Luxury Beauty Salon & Spa in Al Gharrafa, Doha" },
+      { title: "Beau-T Spa Lounge — Salon & Spa in Doha" },
       {
         name: "description",
         content:
@@ -43,28 +46,28 @@ const services = [
     name: "Hair Styling",
     tagline: "Cut, color, blow-dry & treatments",
     price: "from QAR 80",
-    img: hairImg,
+    img: salonPhotos.hair,
     desc: "Precision cuts, glossy blow-outs, deep conditioning and colour services tailored to you.",
   },
   {
     name: "Thai Massage & Body",
     tagline: "Traditional Thai, aroma & hot stone",
     price: "from QAR 150",
-    img: massageImg,
+    img: salonPhotos.massage,
     desc: "Authentic Thai therapy with signature aromatherapy oils — unwind, restore, breathe.",
   },
   {
     name: "Manicure & Pedicure",
     tagline: "Classic, gel & spa treatments",
     price: "from QAR 60",
-    img: nailsImg,
+    img: salonPhotos.nails,
     desc: "Meticulously groomed nails, softened skin and finishes that last.",
   },
   {
     name: "Facials & Skincare",
     tagline: "Radiance, hydration & anti-ageing",
     price: "from QAR 120",
-    img: facialImg,
+    img: salonPhotos.facial,
     desc: "Bespoke facials designed to reveal a luminous, refreshed complexion.",
   },
 ];
@@ -117,13 +120,13 @@ function Index() {
   return (
     <div className="min-h-screen bg-background font-[family-name:var(--font-sans)] text-foreground">
       {/* Nav */}
-      <header className="fixed top-0 z-40 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <a href="#top" className="flex items-baseline gap-2">
-            <span className="font-[family-name:var(--font-serif)] text-2xl italic tracking-tight">
+      <header className="fixed top-0 z-40 w-full border-b border-border/60 bg-background/90 backdrop-blur-md">
+        <div className="mx-auto grid max-w-7xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 sm:px-6 sm:py-4">
+          <a href="#top" className="flex min-w-0 items-baseline gap-2">
+            <span className="shrink-0 font-[family-name:var(--font-serif)] text-2xl italic">
               Beau-T
             </span>
-            <span className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+            <span className="truncate text-[9px] uppercase tracking-[0.24em] text-muted-foreground min-[380px]:text-[10px] min-[380px]:tracking-[0.3em]">
               Spa · Lounge
             </span>
           </a>
@@ -136,7 +139,7 @@ function Index() {
           </nav>
           <a
             href="#book"
-            className="rounded-full bg-primary px-5 py-2 text-xs uppercase tracking-widest text-primary-foreground transition hover:opacity-90"
+            className="shrink-0 rounded-full bg-primary px-4 py-2 text-[10px] uppercase tracking-widest text-primary-foreground transition hover:opacity-90 sm:px-5 sm:text-xs"
           >
             Book Now
           </a>
@@ -144,68 +147,68 @@ function Index() {
       </header>
 
       {/* Hero */}
-      <section id="top" className="relative min-h-screen w-full overflow-hidden">
+      <section id="top" className="relative min-h-[92svh] w-full overflow-hidden sm:min-h-screen">
         <img
-          src={heroImg}
+          src={salonPhotos.hero}
           alt="Beau-T Spa Lounge interior"
           width={1600}
           height={1100}
           className="absolute inset-0 h-full w-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/70" />
-        <div className="relative mx-auto flex min-h-screen max-w-7xl flex-col justify-center px-6 pt-24 text-white">
-          <span className="mb-6 text-xs uppercase tracking-[0.4em] text-[color:var(--gold)]">
+        <div className="salon-hero-scrim absolute inset-0" />
+        <div className="relative mx-auto flex min-h-[92svh] max-w-7xl flex-col justify-center px-4 pt-24 text-foreground sm:min-h-screen sm:px-6">
+          <span className="mb-5 text-[10px] uppercase tracking-[0.24em] text-[color:var(--gold)] sm:mb-6 sm:text-xs sm:tracking-[0.4em]">
             Al Gharrafa · Doha · Est. Since Opening
           </span>
-          <h1 className="max-w-4xl font-[family-name:var(--font-serif)] text-5xl leading-[1.05] md:text-7xl lg:text-8xl">
+          <h1 className="max-w-4xl font-[family-name:var(--font-serif)] text-[2.75rem] leading-[1.03] sm:text-6xl md:text-7xl lg:text-8xl">
             Where beauty <em className="text-[color:var(--gold)]">breathes</em> and time slows.
           </h1>
-          <p className="mt-6 max-w-xl text-lg text-white/85">
+          <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground sm:mt-6 sm:text-lg">
             A sanctuary of hair, skin and Thai therapy in the heart of Al Gharrafa —
             crafted for those who value quiet luxury.
           </p>
-          <div className="mt-10 flex flex-wrap gap-4">
+          <div className="mt-8 grid w-full max-w-sm gap-3 sm:mt-10 sm:flex sm:max-w-none sm:flex-wrap sm:gap-4">
             <a
               href="#book"
-              className="rounded-full bg-[color:var(--gold)] px-8 py-3 text-sm uppercase tracking-widest text-primary transition hover:brightness-110"
+              className="inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-6 py-3 text-center text-xs uppercase tracking-widest text-primary-foreground transition hover:opacity-90 sm:px-8 sm:text-sm"
             >
               Reserve Your Visit
             </a>
             <a
               href="tel:+974XXXXXXXXX"
-              className="rounded-full border border-white/40 px-8 py-3 text-sm uppercase tracking-widest text-white transition hover:bg-white/10"
+              className="inline-flex min-h-12 items-center justify-center rounded-full border border-primary/30 bg-background/65 px-6 py-3 text-center text-xs uppercase tracking-widest text-foreground backdrop-blur transition hover:bg-background sm:px-8 sm:text-sm"
             >
               Call XXXXXXXXX
             </a>
           </div>
-          <div className="mt-16 flex flex-wrap items-center gap-8 text-sm text-white/80">
+          <div className="mt-12 grid max-w-md grid-cols-2 gap-x-6 gap-y-6 text-sm text-foreground sm:mt-16 sm:flex sm:max-w-none sm:flex-wrap sm:items-center sm:gap-8">
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-[color:var(--gold)] text-lg">★★★★☆</span>
                 <span className="font-medium">4.1</span>
               </div>
-              <div className="text-xs uppercase tracking-widest text-white/60">19 Google Reviews</div>
+              <div className="text-xs uppercase tracking-widest text-muted-foreground">19 Google Reviews</div>
             </div>
             <div>
               <div className="font-medium">Open Today</div>
-              <div className="text-xs uppercase tracking-widest text-white/60">Closes 9:00 PM</div>
+              <div className="text-xs uppercase tracking-widest text-muted-foreground">Closes 9:00 PM</div>
             </div>
-            <div>
+            <div className="col-span-2 sm:col-auto">
               <div className="font-medium">Al Gharrafa</div>
-              <div className="text-xs uppercase tracking-widest text-white/60">Bldg 44, Street 685</div>
+              <div className="text-xs uppercase tracking-widest text-muted-foreground">Bldg 44, Street 685</div>
             </div>
           </div>
         </div>
       </section>
 
       {/* About */}
-      <section id="about" className="mx-auto max-w-6xl px-6 py-28">
-        <div className="grid gap-16 md:grid-cols-2 md:items-center">
+      <section id="about" className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-28">
+        <div className="grid gap-12 md:grid-cols-2 md:items-center lg:gap-16">
           <div>
-            <span className="text-xs uppercase tracking-[0.4em] text-[color:var(--gold)]">
+            <span className="text-[10px] uppercase tracking-[0.24em] text-[color:var(--gold)] sm:text-xs sm:tracking-[0.4em]">
               Our Story
             </span>
-            <h2 className="mt-4 font-[family-name:var(--font-serif)] text-4xl md:text-5xl">
+            <h2 className="mt-4 font-[family-name:var(--font-serif)] text-3xl leading-tight sm:text-4xl md:text-5xl">
               A quiet corner of Doha, devoted to the art of feeling beautiful.
             </h2>
             <p className="mt-6 leading-relaxed text-muted-foreground">
@@ -218,7 +221,7 @@ function Index() {
               Clean rooms, natural products, and a menu that spans everything from a
               flawless blow-dry to a full-body Thai massage.
             </p>
-            <div className="mt-8 grid grid-cols-3 gap-6 border-t border-border pt-8">
+            <div className="mt-8 grid grid-cols-1 gap-5 border-t border-border pt-8 min-[380px]:grid-cols-3 sm:gap-6">
               <div>
                 <div className="font-[family-name:var(--font-serif)] text-3xl">4.1★</div>
                 <div className="text-xs uppercase tracking-widest text-muted-foreground">Rated</div>
@@ -235,14 +238,14 @@ function Index() {
           </div>
           <div className="relative">
             <img
-              src={massageImg}
+              src={salonPhotos.story}
               alt="Serene treatment room"
               width={1000}
               height={1200}
               loading="lazy"
-              className="aspect-[4/5] w-full rounded-sm object-cover shadow-2xl"
+              className="aspect-[4/5] w-full rounded-sm object-cover shadow-[var(--shadow-soft)]"
             />
-            <div className="absolute -bottom-6 -left-6 hidden bg-[color:var(--gold)] px-6 py-4 text-primary md:block">
+            <div className="absolute -bottom-6 -left-6 hidden bg-accent px-6 py-4 text-accent-foreground md:block">
               <div className="font-[family-name:var(--font-serif)] text-2xl italic">Beau-T</div>
               <div className="text-[10px] uppercase tracking-[0.3em]">A sanctuary in Al Gharrafa</div>
             </div>
@@ -251,14 +254,14 @@ function Index() {
       </section>
 
       {/* Services */}
-      <section id="services" className="bg-secondary/40 py-28">
-        <div className="mx-auto max-w-7xl px-6">
-          <div className="mb-16 flex flex-wrap items-end justify-between gap-6">
-            <div>
-              <span className="text-xs uppercase tracking-[0.4em] text-[color:var(--gold)]">
+      <section id="services" className="bg-secondary py-20 sm:py-28">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="mb-12 grid gap-6 sm:mb-16 md:grid-cols-[minmax(0,1fr)_minmax(0,28rem)] md:items-end">
+            <div className="min-w-0">
+              <span className="text-[10px] uppercase tracking-[0.24em] text-[color:var(--gold)] sm:text-xs sm:tracking-[0.4em]">
                 The Menu
               </span>
-              <h2 className="mt-3 font-[family-name:var(--font-serif)] text-4xl md:text-5xl">
+              <h2 className="mt-3 font-[family-name:var(--font-serif)] text-3xl leading-tight sm:text-4xl md:text-5xl">
                 Services & Treatments
               </h2>
             </div>
@@ -271,7 +274,7 @@ function Index() {
             {services.map((s) => (
               <article
                 key={s.name}
-                className="group flex flex-col overflow-hidden bg-card shadow-sm transition hover:shadow-2xl"
+                className="group flex flex-col overflow-hidden border border-border bg-card shadow-sm transition hover:shadow-[var(--shadow-soft)]"
               >
                 <div className="aspect-[4/5] overflow-hidden">
                   <img
@@ -304,7 +307,7 @@ function Index() {
           </div>
 
           {/* Extended price list */}
-          <div className="mt-16 grid gap-x-16 gap-y-4 rounded-sm border border-border bg-card p-10 md:grid-cols-2">
+          <div className="mt-12 grid gap-x-16 gap-y-4 rounded-sm border border-border bg-card p-4 sm:mt-16 sm:p-6 md:grid-cols-2 md:p-10">
             {[
               ["Signature Blow-Dry", "QAR 90"],
               ["Hair Colour (Full)", "QAR 350"],
@@ -319,8 +322,8 @@ function Index() {
               ["Full Body Wax", "QAR 280"],
               ["Threading & Brows", "QAR 40"],
             ].map(([name, price]) => (
-              <div key={name} className="flex items-baseline justify-between gap-4 border-b border-dashed border-border/60 py-2">
-                <span className="text-sm">{name}</span>
+              <div key={name} className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-4 border-b border-dashed border-border/60 py-2">
+                <span className="min-w-0 text-sm">{name}</span>
                 <span className="font-[family-name:var(--font-serif)] text-lg">{price}</span>
               </div>
             ))}
@@ -329,12 +332,12 @@ function Index() {
       </section>
 
       {/* Gallery */}
-      <section id="gallery" className="mx-auto max-w-7xl px-6 py-28">
+      <section id="gallery" className="mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-28">
         <div className="mb-12 text-center">
-          <span className="text-xs uppercase tracking-[0.4em] text-[color:var(--gold)]">
+          <span className="text-[10px] uppercase tracking-[0.24em] text-[color:var(--gold)] sm:text-xs sm:tracking-[0.4em]">
             Inside The Lounge
           </span>
-          <h2 className="mt-3 font-[family-name:var(--font-serif)] text-4xl md:text-5xl">
+          <h2 className="mt-3 font-[family-name:var(--font-serif)] text-3xl leading-tight sm:text-4xl md:text-5xl">
             A glimpse of the atmosphere
           </h2>
         </div>
@@ -356,24 +359,24 @@ function Index() {
       </section>
 
       {/* Reviews */}
-      <section id="reviews" className="bg-primary py-28 text-primary-foreground">
-        <div className="mx-auto max-w-6xl px-6">
+      <section id="reviews" className="bg-secondary py-20 text-foreground sm:py-28">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="mb-14 text-center">
-            <span className="text-xs uppercase tracking-[0.4em] text-[color:var(--gold)]">
+            <span className="text-[10px] uppercase tracking-[0.24em] text-[color:var(--gold)] sm:text-xs sm:tracking-[0.4em]">
               Guest Voices
             </span>
-            <h2 className="mt-3 font-[family-name:var(--font-serif)] text-4xl md:text-5xl">
+            <h2 className="mt-3 font-[family-name:var(--font-serif)] text-3xl leading-tight sm:text-4xl md:text-5xl">
               4.1 ★ on Google · 19 Reviews
             </h2>
           </div>
           <div className="grid gap-6 md:grid-cols-3">
             {reviews.map((r) => (
-              <figure key={r.name} className="border border-white/15 p-8">
+              <figure key={r.name} className="border border-border bg-card p-6 sm:p-8">
                 <Stars n={r.stars} />
                 <blockquote className="mt-5 font-[family-name:var(--font-serif)] text-xl leading-snug italic">
                   “{r.body}”
                 </blockquote>
-                <figcaption className="mt-6 text-xs uppercase tracking-widest text-white/60">
+                <figcaption className="mt-6 text-xs uppercase tracking-widest text-muted-foreground">
                   — {r.name}
                 </figcaption>
               </figure>
@@ -384,7 +387,7 @@ function Index() {
               href="https://www.google.com/maps/place/Beau-T+Spa+Lounge/@25.323236,51.4542088,17z"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block border-b border-[color:var(--gold)] pb-1 text-sm uppercase tracking-widest text-[color:var(--gold)]"
+              className="inline-block border-b border-primary pb-1 text-sm uppercase tracking-widest text-primary"
             >
               Read all reviews on Google →
             </a>
@@ -393,13 +396,13 @@ function Index() {
       </section>
 
       {/* Booking */}
-      <section id="book" className="mx-auto max-w-6xl px-6 py-28">
-        <div className="grid gap-16 md:grid-cols-2">
+      <section id="book" className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-28">
+        <div className="grid gap-12 md:grid-cols-2 lg:gap-16">
           <div>
-            <span className="text-xs uppercase tracking-[0.4em] text-[color:var(--gold)]">
+            <span className="text-[10px] uppercase tracking-[0.24em] text-[color:var(--gold)] sm:text-xs sm:tracking-[0.4em]">
               Reservations
             </span>
-            <h2 className="mt-3 font-[family-name:var(--font-serif)] text-4xl md:text-5xl">
+            <h2 className="mt-3 font-[family-name:var(--font-serif)] text-3xl leading-tight sm:text-4xl md:text-5xl">
               Book your moment.
             </h2>
             <p className="mt-6 leading-relaxed text-muted-foreground">
@@ -409,23 +412,23 @@ function Index() {
             <div className="mt-10 space-y-5">
               <a
                 href="tel:+974XXXXXXXXX"
-                className="flex items-center justify-between border-b border-border pb-4"
+                className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-4 border-b border-border pb-4"
               >
                 <span className="text-xs uppercase tracking-widest text-muted-foreground">Phone</span>
-                <span className="font-[family-name:var(--font-serif)] text-2xl">+974 XXXXXXXXX</span>
+                <span className="min-w-0 text-right font-[family-name:var(--font-serif)] text-xl sm:text-2xl">+974 XXXXXXXXX</span>
               </a>
               <a
                 href={`https://wa.me/974XXXXXXXXX?text=${waMessage}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-between border-b border-border pb-4"
+                className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-4 border-b border-border pb-4"
               >
                 <span className="text-xs uppercase tracking-widest text-muted-foreground">WhatsApp</span>
-                <span className="font-[family-name:var(--font-serif)] text-2xl">Message us</span>
+                <span className="min-w-0 text-right font-[family-name:var(--font-serif)] text-xl sm:text-2xl">Message us</span>
               </a>
-              <div className="flex items-center justify-between border-b border-border pb-4">
+              <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-4 border-b border-border pb-4">
                 <span className="text-xs uppercase tracking-widest text-muted-foreground">Hours</span>
-                <span className="text-right">
+                <span className="min-w-0 text-right">
                   Sat–Thu · 10:00 – 21:00
                   <br />
                   <span className="text-sm text-muted-foreground">Friday · 2:00 PM – 21:00</span>
@@ -440,7 +443,7 @@ function Index() {
               setSubmitted(true);
               window.open(`https://wa.me/974XXXXXXXXX?text=${waMessage}`, "_blank");
             }}
-            className="border border-border bg-card p-8 md:p-10"
+            className="border border-border bg-card p-5 sm:p-8 md:p-10"
           >
             <h3 className="font-[family-name:var(--font-serif)] text-2xl">Request an Appointment</h3>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -478,7 +481,7 @@ function Index() {
                   <option>Consultation</option>
                 </select>
               </Field>
-              <div className="grid grid-cols-2 gap-5">
+              <div className="grid gap-5 min-[430px]:grid-cols-2">
                 <Field label="Date">
                   <input
                     required
@@ -510,7 +513,7 @@ function Index() {
 
             <button
               type="submit"
-              className="mt-8 w-full rounded-full bg-primary py-4 text-xs uppercase tracking-[0.3em] text-primary-foreground transition hover:opacity-90"
+              className="mt-8 w-full rounded-full bg-primary px-4 py-4 text-xs uppercase tracking-[0.18em] text-primary-foreground transition hover:opacity-90 sm:tracking-[0.3em]"
             >
               Send Request via WhatsApp
             </button>
@@ -524,14 +527,14 @@ function Index() {
       </section>
 
       {/* Visit */}
-      <section id="visit" className="bg-secondary/40 py-28">
-        <div className="mx-auto max-w-7xl px-6">
+      <section id="visit" className="bg-secondary py-20 sm:py-28">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="mb-12 grid gap-8 md:grid-cols-3">
             <div>
-              <span className="text-xs uppercase tracking-[0.4em] text-[color:var(--gold)]">
+              <span className="text-[10px] uppercase tracking-[0.24em] text-[color:var(--gold)] sm:text-xs sm:tracking-[0.4em]">
                 Visit
               </span>
-              <h2 className="mt-3 font-[family-name:var(--font-serif)] text-4xl">
+              <h2 className="mt-3 font-[family-name:var(--font-serif)] text-3xl leading-tight sm:text-4xl">
                 Find us in Al Gharrafa
               </h2>
             </div>
@@ -559,7 +562,7 @@ function Index() {
               </p>
             </div>
           </div>
-          <div className="aspect-[16/7] w-full overflow-hidden border border-border">
+          <div className="aspect-[4/3] w-full overflow-hidden border border-border sm:aspect-[16/7]">
             <iframe
               title="Beau-T Spa Lounge location"
               src="https://www.google.com/maps?q=Beau-T+Spa+Lounge+Doha&z=16&output=embed"
@@ -573,7 +576,7 @@ function Index() {
 
       {/* Footer */}
       <footer className="border-t border-border bg-background py-14">
-        <div className="mx-auto grid max-w-7xl gap-10 px-6 md:grid-cols-4">
+        <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 md:grid-cols-4">
           <div>
             <div className="font-[family-name:var(--font-serif)] text-3xl italic">Beau-T</div>
             <p className="mt-2 text-xs uppercase tracking-[0.3em] text-muted-foreground">
@@ -608,7 +611,7 @@ function Index() {
             </ul>
           </div>
         </div>
-        <div className="mx-auto mt-12 flex max-w-7xl flex-wrap items-center justify-between gap-4 border-t border-border px-6 pt-6 text-xs text-muted-foreground">
+        <div className="mx-auto mt-12 flex max-w-7xl flex-wrap items-center justify-between gap-4 border-t border-border px-4 pt-6 text-xs text-muted-foreground sm:px-6">
           <span>© {new Date().getFullYear()} Beau-T Spa Lounge. All rights reserved.</span>
           <span className="uppercase tracking-widest">Made with care in Doha</span>
         </div>
@@ -620,7 +623,7 @@ function Index() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">{label}</span>
+      <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground sm:tracking-[0.3em]">{label}</span>
       <div className="mt-1">{children}</div>
     </label>
   );
