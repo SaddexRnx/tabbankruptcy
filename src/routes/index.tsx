@@ -10,13 +10,17 @@ import gm7 from "../assets/gmaps/beau-t-7.jpg.asset.json";
 import gm8 from "../assets/gmaps/beau-t-8.jpg.asset.json";
 import gm9 from "../assets/gmaps/beau-t-9.jpg.asset.json";
 import gm10 from "../assets/gmaps/beau-t-10.jpg.asset.json";
+import serviceHair from "../assets/service-hair.jpg";
+import serviceMassage from "../assets/service-massage.jpg";
+import serviceNails from "../assets/service-nails.jpg";
+import serviceFacial from "../assets/service-facial.jpg";
 const gmapsPhotos = [gm1, gm2, gm3, gm4, gm5, gm6, gm7, gm8, gm9, gm10].map((a) => a.url);
 const salonPhotos = {
   hero: gm1.url,
-  hair: gm1.url,
-  massage: gm6.url,
-  nails: gm5.url,
-  facial: gm10.url,
+  hair: serviceHair,
+  massage: serviceMassage,
+  nails: serviceNails,
+  facial: serviceFacial,
   story: gm7.url,
 };
 
@@ -74,12 +78,12 @@ const services = [
 
 const reviews = [
   {
-    name: "Aljazi Almannai",
+    name: "Local Client",
     body: "Perfect hair treatment with special thai massage. A truly beautiful experience.",
     stars: 5,
   },
   {
-    name: "Abhakorn Romsabai",
+    name: "Local Client",
     body: "New Salon in Gharafa. It's clean and relaxing. Lovely staff 🇶🇦",
     stars: 5,
   },
@@ -139,9 +143,9 @@ function Index() {
           </nav>
           <a
             href="#book"
-            className="shrink-0 rounded-full bg-primary px-4 py-2 text-[10px] uppercase tracking-widest text-primary-foreground transition hover:opacity-90 sm:px-5 sm:text-xs"
+            className="shrink-0 rounded-full bg-primary px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.14em] text-primary-foreground transition hover:opacity-90 sm:px-4 sm:py-2 sm:tracking-widest"
           >
-            Book Now
+            Book
           </a>
         </div>
       </header>
@@ -515,7 +519,7 @@ function Index() {
               type="submit"
               className="mt-8 w-full rounded-full bg-primary px-4 py-4 text-xs uppercase tracking-[0.18em] text-primary-foreground transition hover:opacity-90 sm:tracking-[0.3em]"
             >
-              Send Request via WhatsApp
+              Book Now
             </button>
             {submitted && (
               <p className="mt-4 text-center text-sm text-[color:var(--gold)]">
