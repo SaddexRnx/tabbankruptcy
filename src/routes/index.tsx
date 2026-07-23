@@ -18,7 +18,7 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "Beau-T Spa Lounge — Doha" },
       {
         property: "og:description",
-        content: "Luxury beauty salon & spa in Al Gharrafa, Doha. Book online — call 5052 2292.",
+        content: "Luxury beauty salon & spa in Al Gharrafa, Doha. Book online — call XXXXXXXXX.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -161,10 +161,10 @@ function Index() {
               Reserve Your Visit
             </a>
             <a
-              href="tel:+97450522292"
+              href="tel:+974XXXXXXXXX"
               className="rounded-full border border-white/40 px-8 py-3 text-sm uppercase tracking-widest text-white transition hover:bg-white/10"
             >
-              Call 5052 2292
+              Call XXXXXXXXX
             </a>
           </div>
           <div className="mt-16 flex flex-wrap items-center gap-8 text-sm text-white/80">
@@ -399,14 +399,14 @@ function Index() {
             </p>
             <div className="mt-10 space-y-5">
               <a
-                href="tel:+97450522292"
+                href="tel:+974XXXXXXXXX"
                 className="flex items-center justify-between border-b border-border pb-4"
               >
                 <span className="text-xs uppercase tracking-widest text-muted-foreground">Phone</span>
-                <span className="font-[family-name:var(--font-serif)] text-2xl">+974 5052 2292</span>
+                <span className="font-[family-name:var(--font-serif)] text-2xl">+974 XXXXXXXXX</span>
               </a>
               <a
-                href={`https://wa.me/97450522292?text=${waMessage}`}
+                href={`https://wa.me/974XXXXXXXXX?text=${waMessage}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-between border-b border-border pb-4"
@@ -429,7 +429,7 @@ function Index() {
             onSubmit={(e) => {
               e.preventDefault();
               setSubmitted(true);
-              window.open(`https://wa.me/97450522292?text=${waMessage}`, "_blank");
+              window.open(`https://wa.me/974XXXXXXXXX?text=${waMessage}`, "_blank");
             }}
             className="border border-border bg-card p-8 md:p-10"
           >
@@ -538,7 +538,7 @@ function Index() {
             <div>
               <h4 className="text-xs uppercase tracking-widest text-muted-foreground">Contact</h4>
               <p className="mt-2 leading-relaxed">
-                <a href="tel:+97450522292" className="hover:text-[color:var(--gold)]">+974 5052 2292</a><br />
+                <a href="tel:+974XXXXXXXXX" className="hover:text-[color:var(--gold)]">+974 XXXXXXXXX</a><br />
                 <a
                   href="https://www.google.com/maps/place/Beau-T+Spa+Lounge/@25.323236,51.4542088,17z"
                   target="_blank"
@@ -593,7 +593,7 @@ function Index() {
           <div>
             <h4 className="text-xs uppercase tracking-widest text-muted-foreground">Contact</h4>
             <ul className="mt-4 space-y-2 text-sm">
-              <li><a href="tel:+97450522292" className="hover:text-[color:var(--gold)]">+974 5052 2292</a></li>
+              <li><a href="tel:+974XXXXXXXXX" className="hover:text-[color:var(--gold)]">+974 XXXXXXXXX</a></li>
               <li>Bldg 44, Street 685, Al Gharrafa</li>
               <li>Doha, Qatar</li>
             </ul>
