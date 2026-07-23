@@ -519,7 +519,7 @@ function Index() {
               type="submit"
               className="mt-8 w-full rounded-full bg-primary px-4 py-4 text-xs uppercase tracking-[0.18em] text-primary-foreground transition hover:opacity-90 sm:tracking-[0.3em]"
             >
-              Send Request via WhatsApp
+              Book Now
             </button>
             {submitted && (
               <p className="mt-4 text-center text-sm text-[color:var(--gold)]">
