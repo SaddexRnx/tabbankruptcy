@@ -339,21 +339,19 @@ function Index() {
           </h2>
         </div>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          {[heroImg, hairImg, massageImg, nailsImg, facialImg, heroImg, hairImg, massageImg].map(
-            (src, i) => (
-              <div
-                key={i}
-                className={`overflow-hidden ${i % 5 === 0 ? "row-span-2 aspect-[3/4]" : "aspect-square"}`}
-              >
-                <img
-                  src={src}
-                  alt=""
-                  loading="lazy"
-                  className="h-full w-full object-cover transition duration-700 hover:scale-105"
-                />
-              </div>
-            ),
-          )}
+          {gmapsPhotos.map((src, i) => (
+            <div
+              key={i}
+              className={`overflow-hidden ${i % 5 === 0 ? "row-span-2 aspect-[3/4]" : "aspect-square"}`}
+            >
+              <img
+                src={src}
+                alt={`Beau-T Spa Lounge — photo ${i + 1}`}
+                loading="lazy"
+                className="h-full w-full object-cover transition duration-700 hover:scale-105"
+              />
+            </div>
+          ))}
         </div>
       </section>
 
