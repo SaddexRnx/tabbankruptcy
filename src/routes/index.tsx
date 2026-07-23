@@ -23,7 +23,7 @@ const salonPhotos = {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Beau-T Spa Lounge — Luxury Beauty Salon & Spa in Al Gharrafa, Doha" },
+      { title: "Beau-T Spa Lounge — Salon & Spa in Doha" },
       {
         name: "description",
         content:
