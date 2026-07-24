@@ -1,19 +1,19 @@
 import { LayoutGrid, Archive } from "lucide-react";
 
-export default function Dashboard({ tabCount, sessionCount }) {
+export default function Dashboard({ tabCount, sessionCount, t }) {
   return (
     <div className="grid grid-cols-2 gap-3">
       <StatCard
-        icon={<LayoutGrid size={16} className="text-rose-400" />}
-        label="Open Tabs"
+        icon={<LayoutGrid size={14} />}
+        label={t("openTabs")}
         value={tabCount}
-        hint={tabCount > 20 ? "That's a lot." : "In this window"}
+        hint={tabCount > 20 ? t("thatsALot") : t("inThisWindow")}
       />
       <StatCard
-        icon={<Archive size={16} className="text-orange-400" />}
-        label="Sessions"
+        icon={<Archive size={14} />}
+        label={t("sessions")}
         value={sessionCount}
-        hint="Saved for later"
+        hint={t("savedForLater")}
       />
     </div>
   );
@@ -21,15 +21,13 @@ export default function Dashboard({ tabCount, sessionCount }) {
 
 function StatCard({ icon, label, value, hint }) {
   return (
-    <div className="bg-zinc-800/60 border border-zinc-700/70 rounded-xl p-3">
-      <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-zinc-400">
+    <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 p-3">
+      <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-neutral-500">
         {icon}
         <span>{label}</span>
       </div>
-      <div className="mt-1.5 text-3xl font-semibold tabular-nums text-white">
-        {value}
-      </div>
-      <div className="text-[10px] text-zinc-500 mt-0.5">{hint}</div>
+      <div className="mt-1.5 text-3xl font-semibold tabular-nums">{value}</div>
+      <div className="text-[10px] text-neutral-500 mt-0.5">{hint}</div>
     </div>
   );
 }
