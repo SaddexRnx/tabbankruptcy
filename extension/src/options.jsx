@@ -150,9 +150,20 @@ function Options() {
                 onChange={(e) => update({ autoArchive: { ...s.autoArchive, max: Math.max(20, Math.min(2000, Number(e.target.value) || 300)) } })}
                 className="input" />
             </Field>
+            <Field label="Never auto-archive these domains (one per line, matches subdomains)">
+              <textarea rows={3} value={s.autoArchiveExcludeDomains}
+                onChange={(e) => update({ autoArchiveExcludeDomains: e.target.value })}
+                className="input font-mono text-xs" placeholder={"gmail.com\nnotion.so"} />
+            </Field>
+            <Field label="Always keep pinned (auto-pin these domains so they're never archived)">
+              <textarea rows={3} value={s.autoArchiveKeepDomains}
+                onChange={(e) => update({ autoArchiveKeepDomains: e.target.value })}
+                className="input font-mono text-xs" placeholder={"calendar.google.com\ngithub.com"} />
+            </Field>
             <p className="text-xs text-neutral-500">
               Archived tabs live in the extension's side panel — Chrome/Edge/Brave show it via the side-panel icon; Firefox exposes it under View → Sidebar → TabBankruptcy.
             </p>
+
           </Section>
 
           <Section title="Ghost Tab Checker">
