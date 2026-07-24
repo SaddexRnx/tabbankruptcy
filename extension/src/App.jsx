@@ -225,9 +225,18 @@ export default function App() {
     } else if (undoState.kind === "delete") {
       const merged = [...(undoState.sessions || []), ...sessions].sort((a, b) => b.createdAt - a.createdAt);
       await persistSessions(merged);
+    } else if (undoState.kind === "nuke") {
+      // Reopen archived ghost tabs and remove the auto-created Ghosts session
+      if (isExtension && undoState.tabs?.length) {
+        undoState.tabs.forEach((tb) => chrome.tabs.create({ url: tb.url, active: false }));
+      }
+      if (undoState.sessionId) {
+        await persistSessions(sessions.filter((s) => s.id !== undoState.sessionId));
+      }
     }
     flash(tt("undone")); dismissUndo();
   };
+
 
   // Export / Import with versioning
   const exportSessions = () => {
@@ -383,7 +392,7 @@ export default function App() {
             <p className="text-[11px] text-neutral-500 leading-relaxed px-1">{tt("intro")}</p>
 
             <AutoArchiveCard settings={settings} setSettings={setSettings} t={tt} flash={flash} />
-            <GhostCheckerCard settings={settings} setSettings={setSettings} t={tt} flash={flash} refresh={refresh} />
+            <GhostCheckerCard settings={settings} setSettings={setSettings} t={tt} flash={flash} refresh={refresh} armUndo={armUndo} />
 
             <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 p-3">
               <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-neutral-500">
@@ -592,7 +601,7 @@ function AutoArchiveCard({ settings, setSettings, t, flash }) {
   );
 }
 
-function GhostCheckerCard({ settings, setSettings, t, flash, refresh }) {
+function GhostCheckerCard({ settings, setSettings, t, flash, refresh, armUndo }) {
   const [scanning, setScanning] = useState(false);
   const [items, setItems] = useState(null);
   const [selected, setSelected] = useState(() => new Set());
@@ -629,10 +638,20 @@ function GhostCheckerCard({ settings, setSettings, t, flash, refresh }) {
       setSettings(merged); await setItem(SETTINGS_KEY, merged);
     }
     const r = await send({ type: "NUKE_GHOSTS", ids });
-    flash(t("ghostsNuked", { n: ids.length }));
+    if (r?.ok && armUndo) {
+      armUndo({
+        kind: "nuke",
+        sessionId: r.sessionId,
+        tabs: r.tabs || [],
+        label: t("undoNuke", { n: r.archived ?? ids.length }),
+      });
+    } else {
+      flash(t("ghostsNuked", { n: ids.length }));
+    }
     setItems(null); setSelected(new Set());
     refresh?.();
   };
+
 
   const toggle = (id) => setSelected((prev) => {
     const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n;

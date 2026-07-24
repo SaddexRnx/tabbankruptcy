@@ -150,9 +150,20 @@ function Options() {
                 onChange={(e) => update({ autoArchive: { ...s.autoArchive, max: Math.max(20, Math.min(2000, Number(e.target.value) || 300)) } })}
                 className="input" />
             </Field>
+            <Field label="Never auto-archive these domains (one per line, matches subdomains)">
+              <textarea rows={3} value={s.autoArchiveExcludeDomains}
+                onChange={(e) => update({ autoArchiveExcludeDomains: e.target.value })}
+                className="input font-mono text-xs" placeholder={"gmail.com\nnotion.so"} />
+            </Field>
+            <Field label="Always keep pinned (auto-pin these domains so they're never archived)">
+              <textarea rows={3} value={s.autoArchiveKeepDomains}
+                onChange={(e) => update({ autoArchiveKeepDomains: e.target.value })}
+                className="input font-mono text-xs" placeholder={"calendar.google.com\ngithub.com"} />
+            </Field>
             <p className="text-xs text-neutral-500">
               Archived tabs live in the extension's side panel — Chrome/Edge/Brave show it via the side-panel icon; Firefox exposes it under View → Sidebar → TabBankruptcy.
             </p>
+
           </Section>
 
           <Section title="Ghost Tab Checker">
@@ -163,10 +174,25 @@ function Options() {
             </Field>
             <Toggle label="Skip the confirmation dialog when nuking ghosts" checked={!!s.skipGhostConfirm}
               onChange={(v) => update({ skipGhostConfirm: v })} />
+            <Field label="Scheduled ghost scan">
+              <select value={s.ghostScanFrequency} onChange={(e) => update({ ghostScanFrequency: e.target.value })} className="input">
+                <option value="off">Off</option>
+                <option value="daily">Every day at…</option>
+                <option value="weekly">Every week at…</option>
+              </select>
+            </Field>
+            {(s.ghostScanFrequency === "daily" || s.ghostScanFrequency === "weekly") && (
+              <Field label="Time of day">
+                <input type="time" value={s.ghostScanTime} onChange={(e) => update({ ghostScanTime: e.target.value })} className="input" />
+              </Field>
+            )}
+            <Toggle label="Notify me with a summary count after each scheduled scan" checked={!!s.ghostScanNotify}
+              onChange={(v) => update({ ghostScanNotify: v })} />
             <p className="text-xs text-neutral-500">
               Ghost tabs are detected via tab metadata (idle time, browser-suspended state, duplicate URLs). Real CPU/RAM sampling requires Chrome's Dev-channel <code>processes</code> API and isn't used here.
             </p>
           </Section>
+
 
           <Section title="Which tabs count">
             <Toggle label="Ignore pinned tabs" checked={s.ignorePinned} onChange={(v) => update({ ignorePinned: v })} />

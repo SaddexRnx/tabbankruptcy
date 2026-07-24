@@ -33,10 +33,18 @@ export const DEFAULT_SETTINGS = {
     keepAudible: true,   // never touch audible/playing tabs
     max: 300,            // cap archive size
   },
+  // Per-website rules for Auto-Archive
+  autoArchiveExcludeDomains: "", // newline-separated: never auto-archive these
+  autoArchiveKeepDomains: "",    // newline-separated: auto-pin these instead
   // Ghost checker
   skipGhostConfirm: false,
   ghostIdleMinutes: 60,
+  ghostScanFrequency: "off", // off | daily | weekly
+  ghostScanTime: "09:00",
+  ghostScanNotify: true,
 };
+
+
 
 export const isExtension =
   typeof chrome !== "undefined" && chrome.storage && chrome.storage.local;
