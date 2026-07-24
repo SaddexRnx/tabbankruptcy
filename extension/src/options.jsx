@@ -174,10 +174,25 @@ function Options() {
             </Field>
             <Toggle label="Skip the confirmation dialog when nuking ghosts" checked={!!s.skipGhostConfirm}
               onChange={(v) => update({ skipGhostConfirm: v })} />
+            <Field label="Scheduled ghost scan">
+              <select value={s.ghostScanFrequency} onChange={(e) => update({ ghostScanFrequency: e.target.value })} className="input">
+                <option value="off">Off</option>
+                <option value="daily">Every day at…</option>
+                <option value="weekly">Every week at…</option>
+              </select>
+            </Field>
+            {(s.ghostScanFrequency === "daily" || s.ghostScanFrequency === "weekly") && (
+              <Field label="Time of day">
+                <input type="time" value={s.ghostScanTime} onChange={(e) => update({ ghostScanTime: e.target.value })} className="input" />
+              </Field>
+            )}
+            <Toggle label="Notify me with a summary count after each scheduled scan" checked={!!s.ghostScanNotify}
+              onChange={(v) => update({ ghostScanNotify: v })} />
             <p className="text-xs text-neutral-500">
               Ghost tabs are detected via tab metadata (idle time, browser-suspended state, duplicate URLs). Real CPU/RAM sampling requires Chrome's Dev-channel <code>processes</code> API and isn't used here.
             </p>
           </Section>
+
 
           <Section title="Which tabs count">
             <Toggle label="Ignore pinned tabs" checked={s.ignorePinned} onChange={(v) => update({ ignorePinned: v })} />
