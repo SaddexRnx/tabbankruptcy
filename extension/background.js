@@ -218,13 +218,27 @@ const runAutoArchive = async () => {
   const s = await getSettings();
   const cfg = s.autoArchive || {};
   if (!cfg.enabled) return;
+  const excludeDomains = parseDomains(s.autoArchiveExcludeDomains);
+  const keepDomains = parseDomains(s.autoArchiveKeepDomains);
   const tabs = await new Promise((r) => chrome.tabs.query({}, (t) => r(t || [])));
   const cutoff = Date.now() - Math.max(1, cfg.idleMinutes) * 60 * 1000;
+
+  // Auto-pin tabs matching keepDomains (once), so they never get archived
+  for (const t of tabs) {
+    const host = hostOf(t.url);
+    if (!t.pinned && matchesDomain(host, keepDomains)) {
+      try { chrome.tabs.update(t.id, { pinned: true }); } catch {}
+    }
+  }
+
   const candidates = tabs.filter((t) => {
     if (!t.url || isInternalUrl(t.url)) return false;
     if (t.active) return false;
     if (cfg.keepPinned && t.pinned) return false;
     if (cfg.keepAudible && t.audible) return false;
+    const host = hostOf(t.url);
+    if (matchesDomain(host, excludeDomains)) return false;
+    if (matchesDomain(host, keepDomains)) return false;
     const last = t.lastAccessed || 0;
     return last > 0 && last < cutoff;
   });
@@ -260,6 +274,38 @@ const rescheduleAutoArchive = async () => {
     periodInMinutes: Math.max(1, Math.min(30, Math.floor((s.autoArchive.idleMinutes || 30) / 3) || 5)),
   });
 };
+
+// ---- Scheduled Ghost Scan ----
+const notifyGhostSummary = (count) => {
+  try {
+    if (!chrome.notifications?.create) return;
+    chrome.notifications.create(`tb-ghost-${Date.now()}`, {
+      type: "basic",
+      iconUrl: "icon.png",
+      title: "TabBankruptcy — Ghost scan",
+      message: count === 0
+        ? "No ghost tabs found. Nice, tidy setup."
+        : `${count} ghost tab${count === 1 ? "" : "s"} detected. Open TabBankruptcy to review.`,
+      priority: 0,
+    });
+  } catch {}
+};
+
+const runScheduledGhostScan = async () => {
+  const s = await getSettings();
+  const items = await scanGhosts();
+  await set("tb_last_ghost_scan", { at: Date.now(), count: items.length });
+  if (s.ghostScanNotify) notifyGhostSummary(items.length);
+};
+
+const rescheduleGhostScan = async () => {
+  const s = await getSettings();
+  await chrome.alarms.clear(GHOST_SCAN_ALARM);
+  if (!["daily", "weekly"].includes(s.ghostScanFrequency)) return;
+  const when = nextFireMs(s.ghostScanFrequency, s.ghostScanTime, s.autoExportTimezone);
+  chrome.alarms.create(GHOST_SCAN_ALARM, { when });
+};
+
 
 // ---- Ghost tab checker ----
 // Uses tab metadata only (no CPU/RAM APIs — those need `processes` perm on Chrome Dev channel).
