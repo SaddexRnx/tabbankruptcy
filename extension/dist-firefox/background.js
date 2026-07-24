@@ -9,7 +9,6 @@ const AUTO_EXPORT_ALARM = "tb_auto_export";
 const AUTO_ARCHIVE_ALARM = "tb_auto_archive";
 const CLOUD_PUSH_ALARM = "tb_cloud_push";
 const GHOST_SCAN_ALARM = "tb_ghost_scan";
-
 const CURRENT_SESSION_VERSION = 2;
 
 const DEFAULT_SETTINGS = {
@@ -21,8 +20,15 @@ const DEFAULT_SETTINGS = {
   dedupOnRestore: true, restoreInNewWindow: false,
   syncToStorageSync: false, cloudEndpointUrl: "", cloudEndpointToken: "", cloudAutoPush: false,
   autoArchive: { enabled: false, idleMinutes: 30, keepPinned: true, keepAudible: true, max: 300 },
+  autoArchiveExcludeDomains: "", autoArchiveKeepDomains: "",
   skipGhostConfirm: false, ghostIdleMinutes: 60,
+  ghostScanFrequency: "off", ghostScanTime: "09:00", ghostScanNotify: true,
 };
+
+const parseDomains = (txt) => (txt || "").split(/[\n,]/).map((s) => s.trim().toLowerCase()).filter(Boolean);
+const hostOf = (u) => { try { return new URL(u).hostname.toLowerCase(); } catch { return ""; } };
+const matchesDomain = (host, list) => host && list.some((d) => host === d || host.endsWith("." + d));
+
 
 const get = (key, fallback) =>
   new Promise((resolve) => chrome.storage.local.get([key], (r) => resolve(r[key] ?? fallback)));
@@ -212,13 +218,27 @@ const runAutoArchive = async () => {
   const s = await getSettings();
   const cfg = s.autoArchive || {};
   if (!cfg.enabled) return;
+  const excludeDomains = parseDomains(s.autoArchiveExcludeDomains);
+  const keepDomains = parseDomains(s.autoArchiveKeepDomains);
   const tabs = await new Promise((r) => chrome.tabs.query({}, (t) => r(t || [])));
   const cutoff = Date.now() - Math.max(1, cfg.idleMinutes) * 60 * 1000;
+
+  // Auto-pin tabs matching keepDomains (once), so they never get archived
+  for (const t of tabs) {
+    const host = hostOf(t.url);
+    if (!t.pinned && matchesDomain(host, keepDomains)) {
+      try { chrome.tabs.update(t.id, { pinned: true }); } catch {}
+    }
+  }
+
   const candidates = tabs.filter((t) => {
     if (!t.url || isInternalUrl(t.url)) return false;
     if (t.active) return false;
     if (cfg.keepPinned && t.pinned) return false;
     if (cfg.keepAudible && t.audible) return false;
+    const host = hostOf(t.url);
+    if (matchesDomain(host, excludeDomains)) return false;
+    if (matchesDomain(host, keepDomains)) return false;
     const last = t.lastAccessed || 0;
     return last > 0 && last < cutoff;
   });
@@ -255,6 +275,38 @@ const rescheduleAutoArchive = async () => {
   });
 };
 
+// ---- Scheduled Ghost Scan ----
+const notifyGhostSummary = (count) => {
+  try {
+    if (!chrome.notifications?.create) return;
+    chrome.notifications.create(`tb-ghost-${Date.now()}`, {
+      type: "basic",
+      iconUrl: "icon.png",
+      title: "TabBankruptcy — Ghost scan",
+      message: count === 0
+        ? "No ghost tabs found. Nice, tidy setup."
+        : `${count} ghost tab${count === 1 ? "" : "s"} detected. Open TabBankruptcy to review.`,
+      priority: 0,
+    });
+  } catch {}
+};
+
+const runScheduledGhostScan = async () => {
+  const s = await getSettings();
+  const items = await scanGhosts();
+  await set("tb_last_ghost_scan", { at: Date.now(), count: items.length });
+  if (s.ghostScanNotify) notifyGhostSummary(items.length);
+};
+
+const rescheduleGhostScan = async () => {
+  const s = await getSettings();
+  await chrome.alarms.clear(GHOST_SCAN_ALARM);
+  if (!["daily", "weekly"].includes(s.ghostScanFrequency)) return;
+  const when = nextFireMs(s.ghostScanFrequency, s.ghostScanTime, s.autoExportTimezone);
+  chrome.alarms.create(GHOST_SCAN_ALARM, { when });
+};
+
+
 // ---- Ghost tab checker ----
 // Uses tab metadata only (no CPU/RAM APIs — those need `processes` perm on Chrome Dev channel).
 // Heuristic:
@@ -290,29 +342,34 @@ const scanGhosts = async () => {
 };
 
 const nukeGhosts = async (ids) => {
-  if (!Array.isArray(ids) || !ids.length) return { ok: true, archived: 0 };
+  if (!Array.isArray(ids) || !ids.length) return { ok: true, archived: 0, tabs: [] };
   const tabs = await new Promise((r) => chrome.tabs.query({}, (t) => r(t || [])));
   const map = new Map(tabs.map((t) => [t.id, t]));
   const captured = ids.map((id) => map.get(id)).filter(Boolean);
+  const tabPayload = captured.map((t) => ({ url: t.url, title: t.title || t.url, favIconUrl: t.favIconUrl || "" }));
+  let sessionId = null;
   if (captured.length) {
     const sessions = await get(STORAGE_KEY, []);
+    sessionId = crypto.randomUUID();
     const session = {
-      id: crypto.randomUUID(),
+      id: sessionId,
       name: `Ghosts — ${new Date().toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}`,
       createdAt: Date.now(), updatedAt: Date.now(),
       version: CURRENT_SESSION_VERSION, notes: "Ghost tabs nuked from Ghost Checker", tags: ["ghosts"], revisions: [],
-      tabs: captured.map((t) => ({ url: t.url, title: t.title || t.url, favIconUrl: t.favIconUrl || "" })),
+      tabs: tabPayload,
     };
     await set(STORAGE_KEY, [session, ...sessions]);
   }
   await new Promise((r) => chrome.tabs.remove(ids, r));
-  return { ok: true, archived: captured.length };
+  return { ok: true, archived: captured.length, sessionId, tabs: tabPayload };
 };
+
 
 // ---- Lifecycle ----
 chrome.runtime.onInstalled.addListener(async (details) => {
   rescheduleAutoExport();
   rescheduleAutoArchive();
+  rescheduleGhostScan();
   try { chrome.runtime.setUninstallURL?.("https://tabbankruptcy.lovable.app/uninstalled"); } catch {}
   if (details.reason === "install") {
     const recovered = await restoreFromStorageSync();
@@ -322,12 +379,13 @@ chrome.runtime.onInstalled.addListener(async (details) => {
     }
   }
 });
-chrome.runtime.onStartup?.addListener?.(() => { rescheduleAutoExport(); rescheduleAutoArchive(); });
+chrome.runtime.onStartup?.addListener?.(() => { rescheduleAutoExport(); rescheduleAutoArchive(); rescheduleGhostScan(); });
 
 chrome.alarms.onAlarm.addListener(async (a) => {
   if (a.name === AUTO_EXPORT_ALARM) { await runAutoExport(); rescheduleAutoExport(); }
   else if (a.name === AUTO_ARCHIVE_ALARM) { await runAutoArchive(); }
   else if (a.name === CLOUD_PUSH_ALARM) { cloudPush().catch(() => {}); }
+  else if (a.name === GHOST_SCAN_ALARM) { await runScheduledGhostScan(); rescheduleGhostScan(); }
 });
 
 chrome.storage.onChanged.addListener((changes, area) => {
@@ -341,12 +399,15 @@ chrome.storage.onChanged.addListener((changes, area) => {
     const prevAA = JSON.stringify(prev.autoArchive || {});
     const nextAA = JSON.stringify(next.autoArchive || {});
     if (prevAA !== nextAA) rescheduleAutoArchive();
+    if (prev.ghostScanFrequency !== next.ghostScanFrequency ||
+        prev.ghostScanTime !== next.ghostScanTime) rescheduleGhostScan();
   }
   if (changes[STORAGE_KEY]) {
     mirrorToStorageSync();
     getSettings().then((s) => { if (s.cloudAutoPush && s.cloudEndpointUrl) cloudPush().catch(() => {}); });
   }
 });
+
 
 chrome.commands.onCommand.addListener(async (command) => {
   if (command === "declare_bankruptcy") {
@@ -366,7 +427,9 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     if (msg?.type === "SYNC_MIRROR") return (await mirrorToStorageSync(), { ok: true });
     if (msg?.type === "SYNC_RESTORE") return { sessions: await restoreFromStorageSync() };
     if (msg?.type === "GHOST_SCAN") return { items: await scanGhosts() };
+    if (msg?.type === "GHOST_SCAN_NOW") return (await runScheduledGhostScan(), { ok: true });
     if (msg?.type === "NUKE_GHOSTS") return await nukeGhosts(msg.ids || []);
+
     if (msg?.type === "AUTO_ARCHIVE_NOW") return (await runAutoArchive(), { ok: true });
     if (msg?.type === "OPEN_SIDE_PANEL") {
       try {
