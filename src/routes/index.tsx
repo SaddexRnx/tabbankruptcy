@@ -258,8 +258,9 @@ function Home() {
 
   const T = (k: string) => tr(lang, k);
 
-  const download = () => {
-    fetch("/tab-bankruptcy.zip")
+  const download = (variant: "chromium" | "firefox" = "chromium") => {
+    const file = variant === "firefox" ? "tab-bankruptcy-firefox.zip" : "tab-bankruptcy-chromium.zip";
+    fetch(`/${file}`)
       .then((res) => {
         if (!res.ok) throw new Error(`Download failed: ${res.status}`);
         return res.blob();
@@ -267,7 +268,7 @@ function Home() {
       .then((blob) => {
         const a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
-        a.download = "tab-bankruptcy.zip";
+        a.download = file;
         a.click();
         URL.revokeObjectURL(a.href);
       })
