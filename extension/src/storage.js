@@ -44,7 +44,6 @@ export const DEFAULT_SETTINGS = {
   ghostScanNotify: true,
 };
 
-export const AUTO_ARCHIVE_ALARM_KEY = "tb_auto_archive_list";
 
 
 export const isExtension =
