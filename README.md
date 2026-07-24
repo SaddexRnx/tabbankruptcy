@@ -8,6 +8,16 @@
 
 A privacy-first Chrome & Firefox extension (Manifest V3) that helps you tame tab hoarding with one click — plus a beautiful landing page built with TanStack Start.
 
+[![Chrome](https://img.shields.io/badge/Chrome-Manifest%20V3-4285F4?logo=googlechrome&logoColor=white)](public/tab-bankruptcy-chromium.zip)
+[![Firefox](https://img.shields.io/badge/Firefox-Add--on-FF7139?logo=firefoxbrowser&logoColor=white)](public/tab-bankruptcy-firefox.zip)
+[![TanStack Start](https://img.shields.io/badge/TanStack-Start-EF4444?logo=react&logoColor=white)](https://tanstack.com/start)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
+[![Vite](https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white)](https://vitejs.dev)
+[![License: MIT](https://img.shields.io/badge/License-MIT-000000.svg)](#license)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#contributing)
+
 [Install Chromium](public/tab-bankruptcy-chromium.zip) · [Install Firefox](public/tab-bankruptcy-firefox.zip) · [Live site](https://tabbankruptcy.lovable.app)
 
 </div>
