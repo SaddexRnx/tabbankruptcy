@@ -130,6 +130,44 @@ function Options() {
             <Toggle label="Restore sessions into a new browser window by default" checked={s.restoreInNewWindow} onChange={(v) => update({ restoreInNewWindow: v })} />
           </Section>
 
+          <Section title="Auto-Archive (side panel)">
+            <Toggle
+              label="Auto-close idle tabs and stash them in the side panel"
+              checked={!!s.autoArchive?.enabled}
+              onChange={(v) => update({ autoArchive: { ...s.autoArchive, enabled: v } })}
+            />
+            <Field label="Idle time before archiving (minutes)">
+              <input type="number" min={5} max={720} value={s.autoArchive?.idleMinutes ?? 30}
+                onChange={(e) => update({ autoArchive: { ...s.autoArchive, idleMinutes: Math.max(5, Math.min(720, Number(e.target.value) || 30)) } })}
+                className="input" />
+            </Field>
+            <Toggle label="Never archive pinned tabs" checked={s.autoArchive?.keepPinned ?? true}
+              onChange={(v) => update({ autoArchive: { ...s.autoArchive, keepPinned: v } })} />
+            <Toggle label="Never archive tabs playing audio" checked={s.autoArchive?.keepAudible ?? true}
+              onChange={(v) => update({ autoArchive: { ...s.autoArchive, keepAudible: v } })} />
+            <Field label="Max archived tabs stored">
+              <input type="number" min={20} max={2000} value={s.autoArchive?.max ?? 300}
+                onChange={(e) => update({ autoArchive: { ...s.autoArchive, max: Math.max(20, Math.min(2000, Number(e.target.value) || 300)) } })}
+                className="input" />
+            </Field>
+            <p className="text-xs text-neutral-500">
+              Archived tabs live in the extension's side panel — Chrome/Edge/Brave show it via the side-panel icon; Firefox exposes it under View → Sidebar → TabBankruptcy.
+            </p>
+          </Section>
+
+          <Section title="Ghost Tab Checker">
+            <Field label="Consider a tab a ghost after (minutes)">
+              <input type="number" min={5} max={1440} value={s.ghostIdleMinutes ?? 60}
+                onChange={(e) => update({ ghostIdleMinutes: Math.max(5, Math.min(1440, Number(e.target.value) || 60)) })}
+                className="input" />
+            </Field>
+            <Toggle label="Skip the confirmation dialog when nuking ghosts" checked={!!s.skipGhostConfirm}
+              onChange={(v) => update({ skipGhostConfirm: v })} />
+            <p className="text-xs text-neutral-500">
+              Ghost tabs are detected via tab metadata (idle time, browser-suspended state, duplicate URLs). Real CPU/RAM sampling requires Chrome's Dev-channel <code>processes</code> API and isn't used here.
+            </p>
+          </Section>
+
           <Section title="Which tabs count">
             <Toggle label="Ignore pinned tabs" checked={s.ignorePinned} onChange={(v) => update({ ignorePinned: v })} />
             <Toggle label="Ignore chrome://, edge://, brave://, about: pages" checked={s.ignoreChromeInternal} onChange={(v) => update({ ignoreChromeInternal: v })} />
