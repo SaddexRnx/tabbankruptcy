@@ -826,6 +826,11 @@ function Home() {
           <Feature icon={<Search size={16} />} title={T("f7t")} body={T("f7b")} />
           <Feature icon={<ShieldCheck size={16} />} title={T("f8t")} body={T("f8b")} />
           <Feature icon={<Sparkles size={16} />} title={T("f9t")} body={T("f9b")} />
+          <Feature icon={<Cloud size={16} />} title={T("f10t")} body={T("f10b")} />
+          <Feature icon={<Lock size={16} />} title={T("f11t")} body={T("f11b")} />
+          <Feature icon={<History size={16} />} title={T("f12t")} body={T("f12b")} />
+          <Feature icon={<Pin size={16} />} title={T("f13t")} body={T("f13b")} />
+          <Feature icon={<CalendarClock size={16} />} title={T("f14t")} body={T("f14b")} />
         </section>
 
         <section id="install" className="mt-24 scroll-mt-20">
