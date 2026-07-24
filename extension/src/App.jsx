@@ -374,6 +374,30 @@ export default function App() {
 
   const secondsLeft = undoState ? Math.max(0, Math.ceil((undoState.expiresAt - Date.now()) / 1000)) : 0;
 
+  if (locked) {
+    return (
+      <div className="w-[400px] h-[600px] flex flex-col items-center justify-center gap-4 bg-white text-neutral-900 dark:bg-neutral-950 dark:text-neutral-50 p-6">
+        <div className="w-12 h-12 rounded-2xl bg-neutral-900 dark:bg-white flex items-center justify-center">
+          <Lock size={20} className="text-white dark:text-neutral-900" />
+        </div>
+        <div className="text-center">
+          <h1 className="text-sm font-semibold">TabBankruptcy</h1>
+          <p className="text-xs text-neutral-500 mt-1">Enter your PIN to unlock</p>
+        </div>
+        <input
+          type="password" inputMode="numeric" autoFocus
+          value={pinInput}
+          onChange={(e) => { setPinInput(e.target.value); setPinErr(false); }}
+          onKeyDown={(e) => e.key === "Enter" && tryUnlock()}
+          className="w-40 text-center tracking-[0.4em] text-lg py-2 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white"
+          aria-label="PIN"
+        />
+        {pinErr && <p className="text-[11px] text-red-600 dark:text-red-400">Incorrect PIN</p>}
+        <button onClick={tryUnlock} className="text-xs px-4 py-1.5 rounded-md bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 font-medium">Unlock</button>
+      </div>
+    );
+  }
+
   return (
     <div className="w-[400px] h-[600px] flex flex-col bg-white text-neutral-900 dark:bg-neutral-950 dark:text-neutral-50 relative">
       <a href="#tb-main" className="sr-only focus:not-sr-only focus:absolute focus:top-1 focus:left-1 focus:z-50 focus:px-2 focus:py-1 focus:bg-neutral-900 focus:text-white dark:focus:bg-white dark:focus:text-neutral-900 focus:rounded">{tt("skipToContent")}</a>
