@@ -601,7 +601,7 @@ function AutoArchiveCard({ settings, setSettings, t, flash }) {
   );
 }
 
-function GhostCheckerCard({ settings, setSettings, t, flash, refresh }) {
+function GhostCheckerCard({ settings, setSettings, t, flash, refresh, armUndo }) {
   const [scanning, setScanning] = useState(false);
   const [items, setItems] = useState(null);
   const [selected, setSelected] = useState(() => new Set());
@@ -638,10 +638,20 @@ function GhostCheckerCard({ settings, setSettings, t, flash, refresh }) {
       setSettings(merged); await setItem(SETTINGS_KEY, merged);
     }
     const r = await send({ type: "NUKE_GHOSTS", ids });
-    flash(t("ghostsNuked", { n: ids.length }));
+    if (r?.ok && armUndo) {
+      armUndo({
+        kind: "nuke",
+        sessionId: r.sessionId,
+        tabs: r.tabs || [],
+        label: t("undoNuke", { n: r.archived ?? ids.length }),
+      });
+    } else {
+      flash(t("ghostsNuked", { n: ids.length }));
+    }
     setItems(null); setSelected(new Set());
     refresh?.();
   };
+
 
   const toggle = (id) => setSelected((prev) => {
     const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n;
