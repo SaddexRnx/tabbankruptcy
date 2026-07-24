@@ -225,9 +225,18 @@ export default function App() {
     } else if (undoState.kind === "delete") {
       const merged = [...(undoState.sessions || []), ...sessions].sort((a, b) => b.createdAt - a.createdAt);
       await persistSessions(merged);
+    } else if (undoState.kind === "nuke") {
+      // Reopen archived ghost tabs and remove the auto-created Ghosts session
+      if (isExtension && undoState.tabs?.length) {
+        undoState.tabs.forEach((tb) => chrome.tabs.create({ url: tb.url, active: false }));
+      }
+      if (undoState.sessionId) {
+        await persistSessions(sessions.filter((s) => s.id !== undoState.sessionId));
+      }
     }
     flash(tt("undone")); dismissUndo();
   };
+
 
   // Export / Import with versioning
   const exportSessions = () => {
