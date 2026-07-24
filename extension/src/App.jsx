@@ -389,6 +389,9 @@ export default function App() {
           </div>
         </div>
         <div className="flex items-center gap-1">
+          {isExtension && (
+            <IconBtn onClick={openSidePanel} label="Open side panel"><PanelRight size={14} aria-hidden="true" /></IconBtn>
+          )}
           <IconBtn onClick={toggleTheme} label={`${tt("theme")}: ${settings.theme}`}>
             {settings.theme === "dark" ? <Moon size={14} aria-hidden="true" /> : <Sun size={14} aria-hidden="true" />}
           </IconBtn>
