@@ -5,6 +5,8 @@
 const STORAGE_KEY = "tb_sessions";
 const SETTINGS_KEY = "tb_settings";
 const AUTO_ARCHIVE_KEY = "tb_auto_archive";
+const ACTIVITY_KEY = "tb_activity";
+const ACTIVITY_MAX = 500;
 const AUTO_EXPORT_ALARM = "tb_auto_export";
 const AUTO_ARCHIVE_ALARM = "tb_auto_archive";
 const CLOUD_PUSH_ALARM = "tb_cloud_push";
@@ -34,6 +36,15 @@ const get = (key, fallback) =>
   new Promise((resolve) => chrome.storage.local.get([key], (r) => resolve(r[key] ?? fallback)));
 const set = (key, value) =>
   new Promise((resolve) => chrome.storage.local.set({ [key]: value }, resolve));
+
+const logActivity = async (type, payload = {}) => {
+  try {
+    const prev = await get(ACTIVITY_KEY, []);
+    const entry = { id: crypto.randomUUID(), at: Date.now(), type, ...payload };
+    const next = [entry, ...prev].slice(0, ACTIVITY_MAX);
+    await set(ACTIVITY_KEY, next);
+  } catch {}
+};
 const getSettings = async () => {
   const s = await get(SETTINGS_KEY, {});
   return { ...DEFAULT_SETTINGS, ...s, autoArchive: { ...DEFAULT_SETTINGS.autoArchive, ...(s.autoArchive || {}) } };
@@ -77,6 +88,7 @@ const declareBankruptcy = async () => {
     tabs: savable.map((t) => ({ url: t.url, title: t.title || t.url, favIconUrl: t.favIconUrl || "" })),
   };
   await set(STORAGE_KEY, [session, ...sessions]);
+  await logActivity("declare", { name: session.name, tabs: session.tabs.length, source: "shortcut" });
   chrome.tabs.create({ url: "about:blank" }, (freshTab) => {
     const toClose = tabs.filter((t) => t.id !== freshTab.id && !(settings.ignorePinned && t.pinned)).map((t) => t.id);
     if (toClose.length) chrome.tabs.remove(toClose);
@@ -97,6 +109,7 @@ const restoreLast = async () => {
   if (!urls.length) return;
   if (settings.restoreInNewWindow && chrome.windows?.create) chrome.windows.create({ url: urls });
   else for (const u of urls) chrome.tabs.create({ url: u, active: false });
+  await logActivity("restore", { name: last.name, tabs: urls.length, source: "shortcut" });
 };
 
 // ---- Auto export ----
@@ -437,8 +450,119 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
         return { ok: true };
       } catch (e) { return { ok: false, error: String(e.message || e) }; }
     }
+    if (msg?.type === "LOG_ACTIVITY") return (await logActivity(msg.eventType, msg.payload || {}), { ok: true });
+    if (msg?.type === "DRIVE_BACKUP") return await driveBackup();
+    if (msg?.type === "DRIVE_RESTORE") return await driveRestore();
+    if (msg?.type === "DRIVE_SIGN_OUT") return (await driveSignOut(), { ok: true });
     return null;
   };
   handle().then((r) => sendResponse(r ?? { ok: false })).catch((e) => sendResponse({ ok: false, error: String(e.message || e) }));
   return true;
 });
+
+// ---- Google Drive backup/restore (appDataFolder) ----
+// Uses chrome.identity.launchWebAuthFlow with a user-supplied OAuth Web Client ID.
+// Redirect URL must be added to that OAuth client:
+//   chrome.identity.getRedirectURL()  →  https://<ext-id>.chromiumapp.org/
+const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.appdata";
+const DRIVE_BACKUP_NAME = "tabbankruptcy-backup.json";
+
+const driveAuth = async (interactive = true) => {
+  const s = await getSettings();
+  const clientId = (s.driveClientId || "").trim();
+  if (!clientId) return { ok: false, error: "Missing Google OAuth Client ID. Set it in Settings → Google Drive." };
+  if (!chrome.identity?.launchWebAuthFlow) return { ok: false, error: "Identity API not available in this browser." };
+  const redirectUri = chrome.identity.getRedirectURL();
+  const params = new URLSearchParams({
+    client_id: clientId,
+    response_type: "token",
+    redirect_uri: redirectUri,
+    scope: DRIVE_SCOPE,
+    prompt: "consent",
+    include_granted_scopes: "true",
+  });
+  const url = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+  return new Promise((resolve) => {
+    try {
+      chrome.identity.launchWebAuthFlow({ url, interactive }, (redirect) => {
+        if (chrome.runtime.lastError || !redirect) {
+          return resolve({ ok: false, error: chrome.runtime.lastError?.message || "Sign-in cancelled." });
+        }
+        const hash = redirect.split("#")[1] || "";
+        const p = new URLSearchParams(hash);
+        const token = p.get("access_token");
+        if (!token) return resolve({ ok: false, error: "No access token returned." });
+        resolve({ ok: true, token });
+      });
+    } catch (e) { resolve({ ok: false, error: String(e.message || e) }); }
+  });
+};
+
+const driveSignOut = async () => {
+  // No cached token to revoke since we do implicit flow per-op; nothing to do.
+  return { ok: true };
+};
+
+const driveFindBackup = async (token) => {
+  const q = encodeURIComponent(`name = '${DRIVE_BACKUP_NAME}' and trashed = false`);
+  const r = await fetch(`https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=${q}&fields=files(id,name,modifiedTime)`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!r.ok) throw new Error(`Drive list failed: ${r.status}`);
+  const j = await r.json();
+  return (j.files || [])[0] || null;
+};
+
+const driveBackup = async () => {
+  const auth = await driveAuth(true);
+  if (!auth.ok) return auth;
+  try {
+    const sessions = await get(STORAGE_KEY, []);
+    const activity = await get(ACTIVITY_KEY, []);
+    const payload = { app: "TabBankruptcy", version: 1, exportedAt: new Date().toISOString(), sessions, activity };
+    const body = JSON.stringify(payload);
+    const existing = await driveFindBackup(auth.token);
+    const boundary = "-------tb" + crypto.randomUUID();
+    const meta = existing
+      ? { name: DRIVE_BACKUP_NAME }
+      : { name: DRIVE_BACKUP_NAME, parents: ["appDataFolder"] };
+    const multipart =
+      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n` +
+      JSON.stringify(meta) +
+      `\r\n--${boundary}\r\nContent-Type: application/json\r\n\r\n` +
+      body +
+      `\r\n--${boundary}--`;
+    const url = existing
+      ? `https://www.googleapis.com/upload/drive/v3/files/${existing.id}?uploadType=multipart`
+      : `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart`;
+    const r = await fetch(url, {
+      method: existing ? "PATCH" : "POST",
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
+        "Content-Type": `multipart/related; boundary=${boundary}`,
+      },
+      body: multipart,
+    });
+    if (!r.ok) return { ok: false, error: `Upload failed: ${r.status} ${await r.text()}` };
+    await logActivity("drive_backup", { count: sessions.length });
+    return { ok: true, count: sessions.length };
+  } catch (e) { return { ok: false, error: String(e.message || e) }; }
+};
+
+const driveRestore = async () => {
+  const auth = await driveAuth(true);
+  if (!auth.ok) return auth;
+  try {
+    const existing = await driveFindBackup(auth.token);
+    if (!existing) return { ok: false, error: "No backup found on Google Drive." };
+    const r = await fetch(`https://www.googleapis.com/drive/v3/files/${existing.id}?alt=media`, {
+      headers: { Authorization: `Bearer ${auth.token}` },
+    });
+    if (!r.ok) return { ok: false, error: `Download failed: ${r.status}` };
+    const data = await r.json();
+    const incoming = Array.isArray(data) ? data : data.sessions;
+    if (!Array.isArray(incoming)) return { ok: false, error: "Backup shape unrecognized." };
+    await logActivity("drive_restore", { count: incoming.length });
+    return { ok: true, sessions: incoming, activity: Array.isArray(data.activity) ? data.activity : [] };
+  } catch (e) { return { ok: false, error: String(e.message || e) }; }
+};

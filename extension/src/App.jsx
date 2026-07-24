@@ -2,16 +2,17 @@ import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import {
   Landmark, History, Sun, Moon, Search, Download, Upload, Settings,
   Keyboard, RotateCcw, Trash2, Undo2, X, ExternalLink,
-  Archive, Ghost, Zap, AlertTriangle,
+  Archive, Ghost, Zap, AlertTriangle, Lock, PanelRight, Activity as ActivityIcon,
 } from "lucide-react";
 import Dashboard from "./components/Dashboard.jsx";
 import BankruptcyButton from "./components/BankruptcyButton.jsx";
 import SessionList from "./components/SessionList.jsx";
 import { LANGUAGES, t } from "./i18n.js";
 import {
-  STORAGE_KEY, SETTINGS_KEY, DEFAULT_SETTINGS,
+  STORAGE_KEY, SETTINGS_KEY, ACTIVITY_KEY, DEFAULT_SETTINGS,
   isExtension, getItem, setItem, queryTabs, queryAllTabs, buildName,
   shouldIncludeTab, upgradeSession, pushRevision, CURRENT_SESSION_VERSION,
+  hashPin, logActivity,
 } from "./storage.js";
 
 const UNDO_WINDOW_MS = 12000;
@@ -29,6 +30,10 @@ export default function App() {
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [undoState, setUndoState] = useState(null);
   const [, setUndoTick] = useState(0);
+  const [locked, setLocked] = useState(false);
+  const [pinInput, setPinInput] = useState("");
+  const [pinErr, setPinErr] = useState(false);
+  const [activity, setActivity] = useState([]);
   const fileRef = useRef(null);
   const toastTimerRef = useRef(null);
   const undoTimerRef = useRef(null);
@@ -37,8 +42,8 @@ export default function App() {
   const tt = useCallback((k, v) => t(lang, k, v), [lang]);
 
   const refresh = useCallback(async () => {
-    const [tabs, savedRaw, s] = await Promise.all([
-      queryTabs(), getItem(STORAGE_KEY, []), getItem(SETTINGS_KEY, {}),
+    const [tabs, savedRaw, s, act] = await Promise.all([
+      queryTabs(), getItem(STORAGE_KEY, []), getItem(SETTINGS_KEY, {}), getItem(ACTIVITY_KEY, []),
     ]);
     const merged = { ...DEFAULT_SETTINGS, ...s };
     setSettings(merged);
@@ -46,8 +51,36 @@ export default function App() {
     const eligible = tabs.filter((tb) => shouldIncludeTab(tb, merged));
     setTabCount(eligible.length);
     setSessions(saved.sort((a, b) => b.createdAt - a.createdAt));
+    setActivity(Array.isArray(act) ? act : []);
+    // PIN gate: lock unless this popup session already unlocked
+    const unlocked = sessionStorage.getItem("tb_unlocked") === "1";
+    setLocked(!!merged.pinEnabled && !unlocked);
   }, []);
   useEffect(() => { refresh(); }, [refresh]);
+
+  const tryUnlock = async () => {
+    if (!settings.pinSalt || !settings.pinHash) { setLocked(false); return; }
+    const { hash } = await hashPin(pinInput, settings.pinSalt);
+    if (hash === settings.pinHash) {
+      sessionStorage.setItem("tb_unlocked", "1");
+      setLocked(false); setPinInput(""); setPinErr(false);
+    } else { setPinErr(true); setPinInput(""); }
+  };
+
+  const openSidePanel = async () => {
+    if (!isExtension) return;
+    try {
+      if (chrome.sidePanel?.open) {
+        const win = await new Promise((r) => chrome.windows.getCurrent((w) => r(w)));
+        await chrome.sidePanel.open({ windowId: win.id });
+        window.close();
+      } else if (chrome.sidebarAction?.open) {
+        chrome.sidebarAction.open();
+      } else {
+        flash("Side panel not available in this browser.");
+      }
+    } catch (e) { flash("Couldn't open side panel."); }
+  };
 
   useEffect(() => {
     const apply = () => {
@@ -99,6 +132,8 @@ export default function App() {
       tabs: savable.map((tb) => ({ url: tb.url, title: tb.title || tb.url, favIconUrl: tb.favIconUrl || "" })),
     };
     await persistSessions([session, ...sessions]);
+    await logActivity("declare", { name: session.name, tabs: savable.length });
+    refresh();
     if (isExtension) {
       chrome.tabs.create({ url: "about:blank" }, (freshTab) => {
         const toClose = tabs.filter((tb) => tb.id !== freshTab.id && !(settings.ignorePinned && tb.pinned)).map((tb) => tb.id);
@@ -119,6 +154,8 @@ export default function App() {
     if (!isExtension) { flash("Restore only works inside the extension."); return; }
     const urls = await filterDedup(session.tabs.map((tb) => tb.url));
     if (!urls.length) { flash(tt("nothingToRestore")); return; }
+    await logActivity("restore", { name: session.name, tabs: urls.length });
+    refresh();
     const useWindow = forceNewWindow || settings.restoreInNewWindow;
     if (useWindow && chrome.windows?.create) {
       chrome.windows.create({ url: urls }, (win) => {
@@ -160,6 +197,7 @@ export default function App() {
     const next = sessions.filter((s) => s.id !== id);
     await persistSessions(next);
     setSelectedIds((prev) => { const n = new Set(prev); n.delete(id); return n; });
+    if (target) { await logActivity("delete", { name: target.name }); refresh(); }
     if (target) armUndo({ kind: "delete", sessions: [target], label: tt("undoDelete", { n: 1 }) });
     else flash(tt("sessionDeleted"));
   };
