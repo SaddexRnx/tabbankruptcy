@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="extension/icon.png" alt="TabBankruptcy" width="96" height="96" />
+<img src="public/favicon.png" alt="TabBankruptcy" width="96" height="96" />
 
 # TabBankruptcy
 
