@@ -369,6 +369,7 @@ const nukeGhosts = async (ids) => {
 chrome.runtime.onInstalled.addListener(async (details) => {
   rescheduleAutoExport();
   rescheduleAutoArchive();
+  rescheduleGhostScan();
   try { chrome.runtime.setUninstallURL?.("https://tabbankruptcy.lovable.app/uninstalled"); } catch {}
   if (details.reason === "install") {
     const recovered = await restoreFromStorageSync();
@@ -378,12 +379,13 @@ chrome.runtime.onInstalled.addListener(async (details) => {
     }
   }
 });
-chrome.runtime.onStartup?.addListener?.(() => { rescheduleAutoExport(); rescheduleAutoArchive(); });
+chrome.runtime.onStartup?.addListener?.(() => { rescheduleAutoExport(); rescheduleAutoArchive(); rescheduleGhostScan(); });
 
 chrome.alarms.onAlarm.addListener(async (a) => {
   if (a.name === AUTO_EXPORT_ALARM) { await runAutoExport(); rescheduleAutoExport(); }
   else if (a.name === AUTO_ARCHIVE_ALARM) { await runAutoArchive(); }
   else if (a.name === CLOUD_PUSH_ALARM) { cloudPush().catch(() => {}); }
+  else if (a.name === GHOST_SCAN_ALARM) { await runScheduledGhostScan(); rescheduleGhostScan(); }
 });
 
 chrome.storage.onChanged.addListener((changes, area) => {
@@ -397,12 +399,15 @@ chrome.storage.onChanged.addListener((changes, area) => {
     const prevAA = JSON.stringify(prev.autoArchive || {});
     const nextAA = JSON.stringify(next.autoArchive || {});
     if (prevAA !== nextAA) rescheduleAutoArchive();
+    if (prev.ghostScanFrequency !== next.ghostScanFrequency ||
+        prev.ghostScanTime !== next.ghostScanTime) rescheduleGhostScan();
   }
   if (changes[STORAGE_KEY]) {
     mirrorToStorageSync();
     getSettings().then((s) => { if (s.cloudAutoPush && s.cloudEndpointUrl) cloudPush().catch(() => {}); });
   }
 });
+
 
 chrome.commands.onCommand.addListener(async (command) => {
   if (command === "declare_bankruptcy") {
