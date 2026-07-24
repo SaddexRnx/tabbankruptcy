@@ -427,7 +427,9 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     if (msg?.type === "SYNC_MIRROR") return (await mirrorToStorageSync(), { ok: true });
     if (msg?.type === "SYNC_RESTORE") return { sessions: await restoreFromStorageSync() };
     if (msg?.type === "GHOST_SCAN") return { items: await scanGhosts() };
+    if (msg?.type === "GHOST_SCAN_NOW") return (await runScheduledGhostScan(), { ok: true });
     if (msg?.type === "NUKE_GHOSTS") return await nukeGhosts(msg.ids || []);
+
     if (msg?.type === "AUTO_ARCHIVE_NOW") return (await runAutoArchive(), { ok: true });
     if (msg?.type === "OPEN_SIDE_PANEL") {
       try {
