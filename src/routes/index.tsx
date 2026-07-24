@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import {
   Download, Gavel, Landmark, Archive, RotateCcw, Sun, Moon, Keyboard,
   FileJson, Search, FolderOpen, ToggleRight, Puzzle, Pin, HelpCircle,
-  ChevronDown, Sparkles, ShieldCheck, Ghost,
+  ChevronDown, Sparkles, ShieldCheck, Ghost, Cloud, Lock, History as HistoryIcon, CalendarClock,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
