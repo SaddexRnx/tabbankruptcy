@@ -746,9 +746,8 @@ function Home() {
       <header className="sticky top-0 z-20 border-b border-neutral-200/70 dark:border-neutral-900/80 bg-white/80 dark:bg-neutral-950/80 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 sm:px-6 py-3">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-neutral-900 dark:bg-white">
-              <Landmark size={16} className="text-white dark:text-neutral-900" />
-            </div>
+            <img src="/favicon.png" alt="TabBankruptcy logo" width={36} height={36} className="h-9 w-9 rounded-xl" />
+
             <div className="min-w-0">
               <h1 className="text-base font-semibold tracking-tight">TabBankruptcy</h1>
               <p className="text-[10px] text-neutral-500 truncate">{T("tagline")}</p>
