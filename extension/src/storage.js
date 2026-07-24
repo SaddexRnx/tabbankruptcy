@@ -1,5 +1,6 @@
 export const STORAGE_KEY = "tb_sessions";
 export const SETTINGS_KEY = "tb_settings";
+export const AUTO_ARCHIVE_KEY = "tb_auto_archive";
 
 export const DEFAULT_SETTINGS = {
   namePrefix: "Session",
@@ -13,17 +14,28 @@ export const DEFAULT_SETTINGS = {
   theme: "system",
   language: "en",
   // Auto export
-  autoExportFrequency: "off", // off | hourly | daily | weekly
-  autoExportTime: "03:00",    // HH:mm (for daily/weekly)
-  autoExportTimezone: "",     // IANA; empty = browser default
+  autoExportFrequency: "off",
+  autoExportTime: "03:00",
+  autoExportTimezone: "",
   // Restore behavior
   dedupOnRestore: true,
   restoreInNewWindow: false,
   // Cloud sync
-  syncToStorageSync: false,   // chrome.storage.sync mirror
-  cloudEndpointUrl: "",       // user-owned https endpoint (PUT/GET JSON)
-  cloudEndpointToken: "",     // optional bearer
+  syncToStorageSync: false,
+  cloudEndpointUrl: "",
+  cloudEndpointToken: "",
   cloudAutoPush: false,
+  // Auto-archive (idle tab → side panel)
+  autoArchive: {
+    enabled: false,
+    idleMinutes: 30,     // tab must be idle at least this long
+    keepPinned: true,    // never touch pinned tabs
+    keepAudible: true,   // never touch audible/playing tabs
+    max: 300,            // cap archive size
+  },
+  // Ghost checker
+  skipGhostConfirm: false,
+  ghostIdleMinutes: 60,
 };
 
 export const isExtension =
@@ -93,7 +105,7 @@ export const shouldIncludeTab = (tab, settings) => {
   return true;
 };
 
-// Session versioning helpers
+// Session versioning
 export const CURRENT_SESSION_VERSION = 2;
 
 export const upgradeSession = (s) => ({
@@ -121,7 +133,6 @@ export const snapshotRevision = (s, reason = "edit") => ({
   tabs: s.tabs.map((t) => ({ ...t })),
 });
 
-// Cap revisions per session so storage doesn't grow forever
 export const pushRevision = (session, reason) => {
   const revs = [snapshotRevision(session, reason), ...(session.revisions || [])];
   return { ...session, revisions: revs.slice(0, 20), updatedAt: Date.now() };

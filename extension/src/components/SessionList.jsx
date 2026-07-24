@@ -180,8 +180,11 @@ function SessionCard({ session, selected, onToggleSelect, onRestore, onRestoreIn
 
       {open && (
         <ul className="border-t border-neutral-200 dark:border-neutral-800 max-h-56 overflow-y-auto tb-scroll">
+          {session.tabs.length === 0 && (
+            <li className="px-3 py-2 text-[11px] text-neutral-500 italic">{t("emptySessionTabs")}</li>
+          )}
           {session.tabs.map((tab, i) => (
-            <li key={i} className="flex items-center gap-2 px-3 py-1.5 text-[12px] hover:bg-neutral-50 dark:hover:bg-neutral-900">
+            <li key={i} className="group flex items-center gap-2 px-3 py-1.5 text-[12px] hover:bg-neutral-50 dark:hover:bg-neutral-900">
               {tab.favIconUrl ? (
                 <img src={tab.favIconUrl} alt="" className="w-3.5 h-3.5 rounded-sm flex-shrink-0"
                   onError={(e) => (e.currentTarget.style.visibility = "hidden")} />
@@ -189,6 +192,14 @@ function SessionCard({ session, selected, onToggleSelect, onRestore, onRestoreIn
                 <div className="w-3.5 h-3.5 rounded-sm bg-neutral-200 dark:bg-neutral-800 flex-shrink-0" aria-hidden="true" />
               )}
               <span className="truncate flex-1" title={tab.title}>{tab.title}</span>
+              <button
+                onClick={() => onUpdate({ tabs: session.tabs.filter((_, j) => j !== i) })}
+                aria-label={`${t("removeTab")}: ${tab.title}`}
+                title={t("removeTab")}
+                className="opacity-0 group-hover:opacity-100 focus:opacity-100 p-1 rounded-md hover:bg-neutral-200 dark:hover:bg-neutral-800 text-neutral-500 hover:text-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white transition"
+              >
+                <X size={11} aria-hidden="true" />
+              </button>
             </li>
           ))}
         </ul>

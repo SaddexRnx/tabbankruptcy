@@ -1,40 +1,35 @@
-// TabBankruptcy background service worker (Chromium) / background script (Firefox).
-// Handles keyboard shortcuts, scheduled auto-export with tz + time-of-day,
-// storage.sync mirror, custom cloud endpoint push/pull.
+// TabBankruptcy background — Chromium service worker + Firefox background script.
+// Shortcuts, scheduled auto-export, storage.sync mirror, cloud push/pull,
+// Auto-Archive (idle tabs → side panel) and Ghost Tab checker.
 
 const STORAGE_KEY = "tb_sessions";
 const SETTINGS_KEY = "tb_settings";
+const AUTO_ARCHIVE_KEY = "tb_auto_archive";
 const AUTO_EXPORT_ALARM = "tb_auto_export";
+const AUTO_ARCHIVE_ALARM = "tb_auto_archive";
 const CLOUD_PUSH_ALARM = "tb_cloud_push";
 const CURRENT_SESSION_VERSION = 2;
 
 const DEFAULT_SETTINGS = {
-  namePrefix: "Session",
-  dateFormat: "short",
-  confirmBeforeClose: true,
-  skipConfirmOnShortcut: false,
-  ignorePinned: true,
-  ignoreChromeInternal: true,
-  ignoreExtensionPages: true,
-  excludePatterns: "",
-  theme: "system",
-  language: "en",
-  autoExportFrequency: "off",
-  autoExportTime: "03:00",
-  autoExportTimezone: "",
-  dedupOnRestore: true,
-  restoreInNewWindow: false,
-  syncToStorageSync: false,
-  cloudEndpointUrl: "",
-  cloudEndpointToken: "",
-  cloudAutoPush: false,
+  namePrefix: "Session", dateFormat: "short",
+  confirmBeforeClose: true, skipConfirmOnShortcut: false,
+  ignorePinned: true, ignoreChromeInternal: true, ignoreExtensionPages: true,
+  excludePatterns: "", theme: "system", language: "en",
+  autoExportFrequency: "off", autoExportTime: "03:00", autoExportTimezone: "",
+  dedupOnRestore: true, restoreInNewWindow: false,
+  syncToStorageSync: false, cloudEndpointUrl: "", cloudEndpointToken: "", cloudAutoPush: false,
+  autoArchive: { enabled: false, idleMinutes: 30, keepPinned: true, keepAudible: true, max: 300 },
+  skipGhostConfirm: false, ghostIdleMinutes: 60,
 };
 
 const get = (key, fallback) =>
   new Promise((resolve) => chrome.storage.local.get([key], (r) => resolve(r[key] ?? fallback)));
 const set = (key, value) =>
   new Promise((resolve) => chrome.storage.local.set({ [key]: value }, resolve));
-const getSettings = async () => ({ ...DEFAULT_SETTINGS, ...(await get(SETTINGS_KEY, {})) });
+const getSettings = async () => {
+  const s = await get(SETTINGS_KEY, {});
+  return { ...DEFAULT_SETTINGS, ...s, autoArchive: { ...DEFAULT_SETTINGS.autoArchive, ...(s.autoArchive || {}) } };
+};
 
 const defaultName = (settings) => {
   const d = new Date();
@@ -47,6 +42,9 @@ const defaultName = (settings) => {
   const mm = d.getMinutes().toString().padStart(2, "0");
   return `${prefix} — ${month} ${d.getDate()}, ${hh}:${mm}`;
 };
+
+const isInternalUrl = (u) =>
+  !u || /^(chrome|edge|brave|opera|vivaldi|chrome-extension|moz-extension):\/\//.test(u) || /^about:/.test(u);
 
 const shouldIncludeTab = (tab, settings) => {
   if (!tab.url) return false;
@@ -65,21 +63,14 @@ const declareBankruptcy = async () => {
   if (savable.length === 0) return;
   const sessions = await get(STORAGE_KEY, []);
   const session = {
-    id: crypto.randomUUID(),
-    name: defaultName(settings),
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-    version: CURRENT_SESSION_VERSION,
-    notes: "",
-    tags: [],
-    revisions: [],
+    id: crypto.randomUUID(), name: defaultName(settings),
+    createdAt: Date.now(), updatedAt: Date.now(),
+    version: CURRENT_SESSION_VERSION, notes: "", tags: [], revisions: [],
     tabs: savable.map((t) => ({ url: t.url, title: t.title || t.url, favIconUrl: t.favIconUrl || "" })),
   };
   await set(STORAGE_KEY, [session, ...sessions]);
   chrome.tabs.create({ url: "about:blank" }, (freshTab) => {
-    const toClose = tabs
-      .filter((t) => t.id !== freshTab.id && !(settings.ignorePinned && t.pinned))
-      .map((t) => t.id);
+    const toClose = tabs.filter((t) => t.id !== freshTab.id && !(settings.ignorePinned && t.pinned)).map((t) => t.id);
     if (toClose.length) chrome.tabs.remove(toClose);
   });
 };
@@ -96,11 +87,8 @@ const restoreLast = async () => {
   }
   const urls = last.tabs.map((t) => t.url).filter((u) => !openUrls.has(u));
   if (!urls.length) return;
-  if (settings.restoreInNewWindow && chrome.windows?.create) {
-    chrome.windows.create({ url: urls });
-  } else {
-    for (const u of urls) chrome.tabs.create({ url: u, active: false });
-  }
+  if (settings.restoreInNewWindow && chrome.windows?.create) chrome.windows.create({ url: urls });
+  else for (const u of urls) chrome.tabs.create({ url: u, active: false });
 };
 
 // ---- Auto export ----
@@ -124,9 +112,7 @@ const nextFireMs = (freq, hhmm, tz) => {
     const step = freq === "weekly" ? 7 * 86400e3 : 86400e3;
     while (target <= now.getTime() + 1000) target += step;
     return target;
-  } catch {
-    return Date.now() + 24 * 60 * 60 * 1000;
-  }
+  } catch { return Date.now() + 24 * 60 * 60 * 1000; }
 };
 
 const runAutoExport = async () => {
@@ -160,18 +146,15 @@ const mirrorToStorageSync = async () => {
     if (!s.syncToStorageSync || !chrome.storage?.sync) return;
     const sessions = await get(STORAGE_KEY, []);
     const json = JSON.stringify(sessions);
-    // chrome.storage.sync quotas: 100KB total, 8KB per item. Chunk in 6KB slices.
     const CHUNK = 6000;
     const chunks = [];
     for (let i = 0; i < json.length; i += CHUNK) chunks.push(json.slice(i, i + CHUNK));
     const payload = { tb_sync_count: chunks.length, tb_sync_updated: Date.now() };
     chunks.forEach((c, i) => (payload[`tb_sync_${i}`] = c));
-    // Clear old chunks first (best effort)
     chrome.storage.sync.get(null, (all) => {
       const stale = Object.keys(all).filter((k) => k.startsWith("tb_sync_") && !(k in payload));
       const finish = () => chrome.storage.sync.set(payload, () => void chrome.runtime.lastError);
-      if (stale.length) chrome.storage.sync.remove(stale, finish);
-      else finish();
+      if (stale.length) chrome.storage.sync.remove(stale, finish); else finish();
     });
   } catch (e) { console.warn("storage.sync mirror failed", e); }
 };
@@ -201,7 +184,6 @@ const cloudPush = async () => {
   if (!res.ok) throw new Error(`Push failed ${res.status}`);
   return { ok: true, count: sessions.length };
 };
-
 const cloudPull = async () => {
   const s = await getSettings();
   if (!s.cloudEndpointUrl) throw new Error("No endpoint configured");
@@ -215,12 +197,122 @@ const cloudPull = async () => {
   return incoming;
 };
 
+// ---- Auto-Archive (idle tabs → side panel) ----
+const enableSidePanel = async (on) => {
+  try {
+    if (chrome.sidePanel?.setOptions) {
+      await chrome.sidePanel.setOptions({ enabled: !!on, path: "sidepanel.html" });
+    }
+  } catch {}
+};
+
+const runAutoArchive = async () => {
+  const s = await getSettings();
+  const cfg = s.autoArchive || {};
+  if (!cfg.enabled) return;
+  const tabs = await new Promise((r) => chrome.tabs.query({}, (t) => r(t || [])));
+  const cutoff = Date.now() - Math.max(1, cfg.idleMinutes) * 60 * 1000;
+  const candidates = tabs.filter((t) => {
+    if (!t.url || isInternalUrl(t.url)) return false;
+    if (t.active) return false;
+    if (cfg.keepPinned && t.pinned) return false;
+    if (cfg.keepAudible && t.audible) return false;
+    const last = t.lastAccessed || 0;
+    return last > 0 && last < cutoff;
+  });
+  if (!candidates.length) return;
+
+  const store = await get(AUTO_ARCHIVE_KEY, []);
+  const seen = new Set(store.map((i) => i.url));
+  const additions = [];
+  for (const t of candidates) {
+    if (seen.has(t.url)) continue;
+    additions.push({
+      id: crypto.randomUUID(),
+      url: t.url,
+      title: t.title || t.url,
+      favIconUrl: t.favIconUrl || "",
+      archivedAt: Date.now(),
+    });
+    seen.add(t.url);
+  }
+  let next = [...additions, ...store];
+  if (cfg.max && next.length > cfg.max) next = next.slice(0, cfg.max);
+  await set(AUTO_ARCHIVE_KEY, next);
+  chrome.tabs.remove(candidates.map((t) => t.id).filter(Boolean));
+};
+
+const rescheduleAutoArchive = async () => {
+  const s = await getSettings();
+  await chrome.alarms.clear(AUTO_ARCHIVE_ALARM);
+  await enableSidePanel(!!s.autoArchive?.enabled);
+  if (!s.autoArchive?.enabled) return;
+  chrome.alarms.create(AUTO_ARCHIVE_ALARM, {
+    delayInMinutes: 1,
+    periodInMinutes: Math.max(1, Math.min(30, Math.floor((s.autoArchive.idleMinutes || 30) / 3) || 5)),
+  });
+};
+
+// ---- Ghost tab checker ----
+// Uses tab metadata only (no CPU/RAM APIs — those need `processes` perm on Chrome Dev channel).
+// Heuristic:
+//   - `discarded: true` → suspended by browser, likely stale ghost
+//   - `lastAccessed` older than ghostIdleMinutes → forgotten
+//   - Same URL open more than once → duplicate ghost
+const scanGhosts = async () => {
+  const s = await getSettings();
+  const idle = Math.max(5, s.ghostIdleMinutes || 60) * 60 * 1000;
+  const tabs = await new Promise((r) => chrome.tabs.query({}, (t) => r(t || [])));
+  const byUrl = new Map();
+  for (const t of tabs) {
+    if (!t.url) continue;
+    if (!byUrl.has(t.url)) byUrl.set(t.url, []);
+    byUrl.get(t.url).push(t);
+  }
+  const now = Date.now();
+  const items = [];
+  for (const t of tabs) {
+    if (!t.url || isInternalUrl(t.url) || t.active || t.pinned || t.audible) continue;
+    const reasons = [];
+    if (t.discarded) reasons.push("suspended");
+    if (t.lastAccessed && now - t.lastAccessed > idle) reasons.push("idle");
+    const dupes = byUrl.get(t.url) || [];
+    if (dupes.length > 1 && dupes[0].id !== t.id) reasons.push("duplicate");
+    if (!reasons.length) continue;
+    items.push({
+      id: t.id, url: t.url, title: t.title || t.url, favIconUrl: t.favIconUrl || "",
+      lastAccessed: t.lastAccessed || 0, discarded: !!t.discarded, reasons,
+    });
+  }
+  return items;
+};
+
+const nukeGhosts = async (ids) => {
+  if (!Array.isArray(ids) || !ids.length) return { ok: true, archived: 0 };
+  const tabs = await new Promise((r) => chrome.tabs.query({}, (t) => r(t || [])));
+  const map = new Map(tabs.map((t) => [t.id, t]));
+  const captured = ids.map((id) => map.get(id)).filter(Boolean);
+  if (captured.length) {
+    const sessions = await get(STORAGE_KEY, []);
+    const session = {
+      id: crypto.randomUUID(),
+      name: `Ghosts — ${new Date().toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}`,
+      createdAt: Date.now(), updatedAt: Date.now(),
+      version: CURRENT_SESSION_VERSION, notes: "Ghost tabs nuked from Ghost Checker", tags: ["ghosts"], revisions: [],
+      tabs: captured.map((t) => ({ url: t.url, title: t.title || t.url, favIconUrl: t.favIconUrl || "" })),
+    };
+    await set(STORAGE_KEY, [session, ...sessions]);
+  }
+  await new Promise((r) => chrome.tabs.remove(ids, r));
+  return { ok: true, archived: captured.length };
+};
+
 // ---- Lifecycle ----
 chrome.runtime.onInstalled.addListener(async (details) => {
   rescheduleAutoExport();
+  rescheduleAutoArchive();
   try { chrome.runtime.setUninstallURL?.("https://tabbankruptcy.lovable.app/uninstalled"); } catch {}
   if (details.reason === "install") {
-    // Attempt auto-recovery from storage.sync (works when user reinstalls under same browser account)
     const recovered = await restoreFromStorageSync();
     if (Array.isArray(recovered) && recovered.length) {
       const existing = await get(STORAGE_KEY, []);
@@ -228,15 +320,12 @@ chrome.runtime.onInstalled.addListener(async (details) => {
     }
   }
 });
-chrome.runtime.onStartup?.addListener?.(() => rescheduleAutoExport());
+chrome.runtime.onStartup?.addListener?.(() => { rescheduleAutoExport(); rescheduleAutoArchive(); });
 
 chrome.alarms.onAlarm.addListener(async (a) => {
-  if (a.name === AUTO_EXPORT_ALARM) {
-    await runAutoExport();
-    rescheduleAutoExport();
-  } else if (a.name === CLOUD_PUSH_ALARM) {
-    cloudPush().catch(() => {});
-  }
+  if (a.name === AUTO_EXPORT_ALARM) { await runAutoExport(); rescheduleAutoExport(); }
+  else if (a.name === AUTO_ARCHIVE_ALARM) { await runAutoArchive(); }
+  else if (a.name === CLOUD_PUSH_ALARM) { cloudPush().catch(() => {}); }
 });
 
 chrome.storage.onChanged.addListener((changes, area) => {
@@ -244,11 +333,12 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if (changes[SETTINGS_KEY]) {
     const prev = changes[SETTINGS_KEY].oldValue || {};
     const next = changes[SETTINGS_KEY].newValue || {};
-    if (
-      prev.autoExportFrequency !== next.autoExportFrequency ||
-      prev.autoExportTime !== next.autoExportTime ||
-      prev.autoExportTimezone !== next.autoExportTimezone
-    ) rescheduleAutoExport();
+    if (prev.autoExportFrequency !== next.autoExportFrequency ||
+        prev.autoExportTime !== next.autoExportTime ||
+        prev.autoExportTimezone !== next.autoExportTimezone) rescheduleAutoExport();
+    const prevAA = JSON.stringify(prev.autoArchive || {});
+    const nextAA = JSON.stringify(next.autoArchive || {});
+    if (prevAA !== nextAA) rescheduleAutoArchive();
   }
   if (changes[STORAGE_KEY]) {
     mirrorToStorageSync();
@@ -259,14 +349,9 @@ chrome.storage.onChanged.addListener((changes, area) => {
 chrome.commands.onCommand.addListener(async (command) => {
   if (command === "declare_bankruptcy") {
     const s = await getSettings();
-    if (s.confirmBeforeClose && !s.skipConfirmOnShortcut) {
-      chrome.action.openPopup?.().catch(() => {});
-      return;
-    }
+    if (s.confirmBeforeClose && !s.skipConfirmOnShortcut) { chrome.action.openPopup?.().catch(() => {}); return; }
     declareBankruptcy();
-  } else if (command === "restore_last") {
-    restoreLast();
-  }
+  } else if (command === "restore_last") { restoreLast(); }
 });
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
@@ -278,6 +363,15 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     if (msg?.type === "CLOUD_PULL") return { sessions: await cloudPull() };
     if (msg?.type === "SYNC_MIRROR") return (await mirrorToStorageSync(), { ok: true });
     if (msg?.type === "SYNC_RESTORE") return { sessions: await restoreFromStorageSync() };
+    if (msg?.type === "GHOST_SCAN") return { items: await scanGhosts() };
+    if (msg?.type === "NUKE_GHOSTS") return await nukeGhosts(msg.ids || []);
+    if (msg?.type === "AUTO_ARCHIVE_NOW") return (await runAutoArchive(), { ok: true });
+    if (msg?.type === "OPEN_SIDE_PANEL") {
+      try {
+        if (chrome.sidePanel?.open) await chrome.sidePanel.open({ windowId: msg.windowId });
+        return { ok: true };
+      } catch (e) { return { ok: false, error: String(e.message || e) }; }
+    }
     return null;
   };
   handle().then((r) => sendResponse(r ?? { ok: false })).catch((e) => sendResponse({ ok: false, error: String(e.message || e) }));

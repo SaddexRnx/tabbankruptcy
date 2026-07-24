@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import {
   Landmark, History, Sun, Moon, Search, Download, Upload, Settings,
   Keyboard, RotateCcw, Trash2, Undo2, X, ExternalLink,
+  Archive, Ghost, Zap, AlertTriangle,
 } from "lucide-react";
 import Dashboard from "./components/Dashboard.jsx";
 import BankruptcyButton from "./components/BankruptcyButton.jsx";
@@ -380,6 +381,10 @@ export default function App() {
             <Dashboard tabCount={tabCount} sessionCount={sessions.length} t={tt} />
             <BankruptcyButton tabCount={tabCount} onDeclare={declareBankruptcy} confirmBeforeClose={settings.confirmBeforeClose} t={tt} />
             <p className="text-[11px] text-neutral-500 leading-relaxed px-1">{tt("intro")}</p>
+
+            <AutoArchiveCard settings={settings} setSettings={setSettings} t={tt} flash={flash} />
+            <GhostCheckerCard settings={settings} setSettings={setSettings} t={tt} flash={flash} refresh={refresh} />
+
             <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 p-3">
               <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-neutral-500">
                 <Keyboard size={12} aria-hidden="true" /> {tt("shortcuts")}
@@ -527,5 +532,197 @@ function ShortcutRow({ label, keys }) {
       <span className="text-neutral-600 dark:text-neutral-400">{label}</span>
       <kbd className="font-mono text-[10px] px-1.5 py-0.5 rounded border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900">{keys}</kbd>
     </li>
+  );
+}
+
+function AutoArchiveCard({ settings, setSettings, t, flash }) {
+  const cfg = settings.autoArchive || {};
+  const on = !!cfg.enabled;
+  const update = async (patch) => {
+    const merged = { ...settings, autoArchive: { ...cfg, ...patch } };
+    setSettings(merged);
+    await setItem(SETTINGS_KEY, merged);
+  };
+  const openPanel = () => {
+    if (!isExtension) return;
+    // Firefox uses sidebar_action; opening it programmatically requires browser.sidebarAction.open()
+    // which needs a user gesture — the popup click qualifies.
+    if (typeof browser !== "undefined" && browser.sidebarAction?.open) {
+      browser.sidebarAction.open().catch(() => flash(t("firefoxSidebarHint")));
+      return;
+    }
+    chrome.windows?.getCurrent?.((w) => {
+      chrome.runtime.sendMessage({ type: "OPEN_SIDE_PANEL", windowId: w?.id }, (r) => {
+        if (!r?.ok) flash(t("firefoxSidebarHint"));
+      });
+    });
+  };
+  return (
+    <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 p-3 space-y-2">
+      <div className="flex items-center gap-2">
+        <Archive size={13} className="text-neutral-500" aria-hidden="true" />
+        <span className="text-[11px] uppercase tracking-wide text-neutral-500 flex-1">{t("autoArchive")}</span>
+        <button
+          onClick={() => update({ enabled: !on })}
+          aria-pressed={on}
+          className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] border transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white ${
+            on ? "bg-neutral-900 text-white border-neutral-900 dark:bg-white dark:text-neutral-900 dark:border-white"
+               : "border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-900"
+          }`}
+        >
+          {on ? t("on") : t("off")}
+        </button>
+      </div>
+      <p className="text-[11px] text-neutral-500 leading-relaxed">{t("autoArchiveDesc")}</p>
+      <div className="flex items-center gap-2 text-[11px]">
+        <label htmlFor="tb-idle" className="text-neutral-600 dark:text-neutral-400">{t("idleMin")}</label>
+        <input id="tb-idle" type="number" min={5} max={720} value={cfg.idleMinutes ?? 30}
+          onChange={(e) => update({ idleMinutes: Math.max(5, Math.min(720, Number(e.target.value) || 30)) })}
+          className="w-16 px-2 py-1 rounded-md border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 text-[11px] outline-none focus:border-neutral-900 dark:focus:border-white" />
+        <span className="text-neutral-500">{t("minutes")}</span>
+        <div className="flex-1" />
+        {on && (
+          <button onClick={openPanel}
+            className="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-900 text-[11px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white">
+            <ExternalLink size={11} aria-hidden="true" /> {t("openSidePanel")}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function GhostCheckerCard({ settings, setSettings, t, flash, refresh }) {
+  const [scanning, setScanning] = useState(false);
+  const [items, setItems] = useState(null);
+  const [selected, setSelected] = useState(() => new Set());
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [dontShow, setDontShow] = useState(false);
+
+  const send = (msg) => new Promise((resolve) => {
+    if (!isExtension) return resolve({ ok: false });
+    try { chrome.runtime.sendMessage(msg, (r) => resolve(r || { ok: false })); }
+    catch { resolve({ ok: false }); }
+  });
+
+  const scan = async () => {
+    setScanning(true);
+    const r = await send({ type: "GHOST_SCAN" });
+    setScanning(false);
+    const list = r?.items || [];
+    setItems(list);
+    setSelected(new Set(list.map((i) => i.id)));
+  };
+
+  const requestNuke = () => {
+    if (!selected.size) return;
+    if (settings.skipGhostConfirm) return doNuke();
+    setDontShow(false);
+    setConfirmOpen(true);
+  };
+
+  const doNuke = async () => {
+    const ids = [...selected];
+    setConfirmOpen(false);
+    if (dontShow) {
+      const merged = { ...settings, skipGhostConfirm: true };
+      setSettings(merged); await setItem(SETTINGS_KEY, merged);
+    }
+    const r = await send({ type: "NUKE_GHOSTS", ids });
+    flash(t("ghostsNuked", { n: ids.length }));
+    setItems(null); setSelected(new Set());
+    refresh?.();
+  };
+
+  const toggle = (id) => setSelected((prev) => {
+    const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n;
+  });
+
+  return (
+    <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 p-3 space-y-2">
+      <div className="flex items-center gap-2">
+        <Ghost size={13} className="text-neutral-500" aria-hidden="true" />
+        <span className="text-[11px] uppercase tracking-wide text-neutral-500 flex-1">{t("ghostChecker")}</span>
+      </div>
+      <p className="text-[11px] text-neutral-500 leading-relaxed">{t("ghostDesc")}</p>
+
+      {items === null ? (
+        <button onClick={scan} disabled={scanning}
+          className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-900 text-[12px] font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white disabled:opacity-50">
+          <Search size={12} aria-hidden="true" /> {scanning ? t("scanning") : t("scanGhosts")}
+        </button>
+      ) : items.length === 0 ? (
+        <>
+          <p className="text-[11px] text-center text-neutral-500 py-2">{t("noGhosts")}</p>
+          <button onClick={() => setItems(null)}
+            className="w-full text-[11px] px-2 py-1 rounded-md border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-900">
+            {t("scanGhosts")}
+          </button>
+        </>
+      ) : (
+        <>
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-medium">{t("ghostsFound", { n: items.length })}</span>
+            <button onClick={() => setItems(null)} className="text-[11px] text-neutral-500 hover:underline">
+              {t("cancel")}
+            </button>
+          </div>
+          <ul className="max-h-40 overflow-y-auto tb-scroll space-y-1 border border-neutral-200 dark:border-neutral-800 rounded-md p-1.5">
+            {items.map((i) => (
+              <li key={i.id} className="flex items-center gap-1.5 text-[11px]">
+                <input type="checkbox" checked={selected.has(i.id)} onChange={() => toggle(i.id)}
+                  aria-label={`Select ${i.title}`}
+                  className="h-3 w-3 accent-neutral-900 dark:accent-white" />
+                {i.favIconUrl ? (
+                  <img src={i.favIconUrl} alt="" className="w-3 h-3 rounded-sm flex-shrink-0"
+                    onError={(e) => (e.currentTarget.style.visibility = "hidden")} />
+                ) : <div className="w-3 h-3 rounded-sm bg-neutral-200 dark:bg-neutral-800 flex-shrink-0" />}
+                <span className="flex-1 truncate" title={i.title}>{i.title}</span>
+                <span className="text-[9px] text-neutral-500 flex gap-0.5">
+                  {i.reasons.map((r) => (
+                    <span key={r} className="rounded-full bg-neutral-100 dark:bg-neutral-800 px-1">
+                      {t(`reason_${r}`)}
+                    </span>
+                  ))}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <button onClick={requestNuke} disabled={!selected.size}
+            className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 text-[12px] font-semibold hover:opacity-90 disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-neutral-900 dark:focus-visible:ring-white">
+            <Zap size={12} aria-hidden="true" /> {t("nukeGhosts")} ({selected.size})
+          </button>
+        </>
+      )}
+
+      {confirmOpen && (
+        <div className="absolute inset-0 z-20 bg-black/40 dark:bg-black/60 flex items-end sm:items-center justify-center p-3" role="dialog" aria-modal="true" aria-labelledby="tb-nuke-title">
+          <div className="w-full rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-2xl p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-neutral-900 dark:bg-white flex items-center justify-center" aria-hidden="true">
+                <AlertTriangle size={16} className="text-white dark:text-neutral-900" />
+              </div>
+              <h3 id="tb-nuke-title" className="text-sm font-semibold">{t("confirmNukeTitle")}</h3>
+            </div>
+            <p className="text-[12px] text-neutral-600 dark:text-neutral-400 leading-relaxed">{t("confirmNukeBody")}</p>
+            <label className="flex items-center gap-2 text-[11px] cursor-pointer">
+              <input type="checkbox" checked={dontShow} onChange={(e) => setDontShow(e.target.checked)}
+                className="h-3 w-3 accent-neutral-900 dark:accent-white" />
+              {t("neverShowAgain")}
+            </label>
+            <div className="flex justify-end gap-2 pt-1">
+              <button onClick={() => setConfirmOpen(false)}
+                className="px-3 py-1.5 rounded-md text-xs border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white">
+                {t("cancel")}
+              </button>
+              <button onClick={doNuke} autoFocus
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-semibold bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-neutral-900 dark:focus-visible:ring-white">
+                <Zap size={11} aria-hidden="true" /> {t("proceed")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
