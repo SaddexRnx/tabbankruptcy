@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
   "name": "TabBankruptcy",
-  "version": "1.3.0",
-  "description": "Hoard no more. Save every open tab into a versioned session, close them, and restore — with cloud sync, dedup and new-window options.",
-  "permissions": ["tabs", "storage", "downloads", "alarms"],
+  "version": "1.4.0",
+  "description": "Save every open tab into a versioned session, close them, restore later. Auto-Archive idle tabs to a side panel and nuke RAM-hogging ghost tabs.",
+  "permissions": ["tabs", "storage", "downloads", "alarms", "sidePanel"],
   "host_permissions": ["<all_urls>"],
   "background": { "service_worker": "background.js" },
   "action": {
@@ -12,6 +12,7 @@
     "default_icon": "icon.png"
   },
   "options_page": "options.html",
+  "side_panel": { "default_path": "sidepanel.html" },
   "icons": { "48": "icon.png", "128": "icon.png" },
   "commands": {
     "_execute_action": {
