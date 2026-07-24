@@ -253,7 +253,7 @@ function Home() {
 
       {/* Hero */}
       <section className="relative overflow-hidden border-b border-neutral-200 dark:border-neutral-900">
-        <FauxTabs />
+        
         <div className="mx-auto max-w-5xl px-4 sm:px-6 py-14 sm:py-20 relative">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 dark:border-neutral-800 bg-white/60 dark:bg-neutral-900/60 px-3 py-1 text-[11px] font-medium text-neutral-600 dark:text-neutral-400">
             <Sparkles size={11} /> v1.4 · Auto-Archive & Ghost Checker
