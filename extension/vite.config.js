@@ -1,9 +1,8 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import { copyFileSync, mkdirSync } from "node:fs";
+import { copyFileSync } from "node:fs";
 import { resolve } from "node:path";
 
-// Copies manifest + icon + background into dist after build
 const copyExtensionFiles = () => ({
   name: "copy-extension-files",
   closeBundle() {
@@ -25,7 +24,10 @@ export default defineConfig({
     outDir: "dist",
     emptyOutDir: true,
     rollupOptions: {
-      input: { popup: resolve(__dirname, "index.html") },
+      input: {
+        popup: resolve(__dirname, "index.html"),
+        options: resolve(__dirname, "options.html"),
+      },
     },
   },
 });

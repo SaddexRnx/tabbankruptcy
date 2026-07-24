@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
   "name": "TabBankruptcy",
-  "version": "1.0.0",
-  "description": "Hoarding tabs? Declare bankruptcy. Save every open tab into a named session, close them all, and free up RAM in one click.",
-  "permissions": ["tabs", "storage"],
+  "version": "1.1.0",
+  "description": "Hoarding tabs? Declare bankruptcy. Save every open tab into a named session, close them all, and free your RAM in one click.",
+  "permissions": ["tabs", "storage", "downloads"],
   "host_permissions": ["<all_urls>"],
   "background": { "service_worker": "background.js" },
   "action": {
@@ -11,5 +11,20 @@
     "default_title": "TabBankruptcy",
     "default_icon": "icon.png"
   },
-  "icons": { "48": "icon.png", "128": "icon.png" }
+  "options_page": "options.html",
+  "icons": { "48": "icon.png", "128": "icon.png" },
+  "commands": {
+    "_execute_action": {
+      "suggested_key": { "default": "Ctrl+Shift+B", "mac": "Command+Shift+B" },
+      "description": "Open TabBankruptcy dashboard"
+    },
+    "declare_bankruptcy": {
+      "suggested_key": { "default": "Ctrl+Shift+X", "mac": "Command+Shift+X" },
+      "description": "Declare bankruptcy (save & close all tabs)"
+    },
+    "restore_last": {
+      "suggested_key": { "default": "Ctrl+Shift+L", "mac": "Command+Shift+L" },
+      "description": "Restore the most recent session"
+    }
+  }
 }
