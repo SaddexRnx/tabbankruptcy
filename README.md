@@ -1,29 +1,80 @@
-# Welcome to your Lovable project
+<div align="center">
 
-This project was built with [Lovable](https://lovable.dev).
+<img src="extension/icon.png" alt="TabBankruptcy" width="96" height="96" />
 
-## Build with Lovable
+# TabBankruptcy
 
-Open your project in the [Lovable editor](https://lovable.dev) and keep building.
+**Declare bankruptcy on your tabs. Restore your sanity.**
 
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: connect the project to GitHub and every change made in Lovable is committed straight to your repository.
-- **Full ownership**: this code is yours. Push to your repository and your changes sync back into Lovable, ready for your next prompt.
+A privacy-first Chrome & Firefox extension (Manifest V3) that helps you tame tab hoarding with one click — plus a beautiful landing page built with TanStack Start.
 
-## Development
+[Install Chromium](public/tab-bankruptcy-chromium.zip) · [Install Firefox](public/tab-bankruptcy-firefox.zip) · [Live site](https://tabbankruptcy.lovable.app)
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+</div>
+
+---
+
+## What it does
+
+TabBankruptcy saves every open tab as a named session, then closes them all so you get a clean slate. Come back later and restore any session — fully, partially, or into a new window. No accounts. No tracking. Your data stays local (with optional Google Drive backup you control).
+
+## Features
+
+- **One-click bankruptcy** — save & close all tabs into a session
+- **Session history** — search, filter, tag, add notes, bulk restore/delete
+- **Versioning** — up to 20 recoverable revisions per session
+- **Undo window** — 12 seconds to revert declare/restore/nuke actions
+- **Auto-Archive** — idle tabs move to the side panel to free RAM
+- **Ghost Tab Checker** — find and nuke suspended/duplicate/idle tabs
+- **Per-domain rules** — always-pin or never-archive specific sites
+- **Scheduled exports & scans** — timezone-aware, with notifications
+- **Google Drive backup** — optional, uses your own OAuth Client ID, stored in `appDataFolder`
+- **PIN lock** — optional PBKDF2-SHA256 salted PIN
+- **Activity log** — full history of what the extension did
+- **Keyboard shortcuts** — `Ctrl+Shift+B` declare · `Ctrl+Shift+X` restore · `Ctrl+Shift+L` dashboard
+- **8 languages** — EN, ES, FR, DE, AR, ZH, PT, JA (extension + website)
+- **Modern UI** — minimalist monochrome, light & dark mode
+
+## Install
+
+### From the packaged builds
+1. Download `public/tab-bankruptcy-chromium.zip` (or `-firefox.zip`) and unzip it.
+2. **Chromium:** open `chrome://extensions`, enable *Developer mode*, click *Load unpacked*, select the folder.
+3. **Firefox:** open `about:debugging#/runtime/this-firefox`, click *Load Temporary Add-on*, pick `manifest.json`.
+
+### Build from source
+```sh
+cd extension
+bun install
+bun run build:chromium   # or build:firefox
+```
+Output lands in `extension/dist/` or `extension/dist-firefox/`.
+
+## Landing page
+
+The marketing site lives in `src/routes/` and runs on TanStack Start + Tailwind CSS v4.
 
 ```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
+bun install
+bun run dev
 ```
 
-## Built with
+## Project layout
 
-- TanStack Start
-- TypeScript
-- React
-- Tailwind CSS
+```
+extension/     Manifest V3 extension (React + Vite + Tailwind)
+src/           Landing page (TanStack Start)
+public/        Packaged extension zips & static assets
+```
+
+## Tech
+
+TanStack Start · React 19 · TypeScript · Tailwind CSS v4 · Vite 7 · Manifest V3 · chrome.storage · chrome.alarms · chrome.sidePanel · chrome.identity
+
+## Privacy
+
+Everything runs locally in your browser. No analytics, no external servers. Google Drive sync is opt-in and uses **your own** OAuth Client ID — the extension never sees your credentials.
+
+## License
+
+MIT
