@@ -1,17 +1,20 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import { copyFileSync } from "node:fs";
+import { copyFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
+
+const target = process.env.BROWSER_TARGET || "chromium";
 
 const copyExtensionFiles = () => ({
   name: "copy-extension-files",
   closeBundle() {
-    const files = ["manifest.json", "background.js", "icon.png"];
-    for (const f of files) {
-      try {
-        copyFileSync(resolve(__dirname, f), resolve(__dirname, "dist", f));
-      } catch (e) {
-        // ignore missing optional files
+    const outDir = process.env.OUT_DIR || "dist";
+    const manifestSrc = target === "firefox" ? "manifest.firefox.json" : "manifest.json";
+    try { copyFileSync(resolve(__dirname, manifestSrc), resolve(__dirname, outDir, "manifest.json")); } catch {}
+    for (const f of ["background.js", "icon.png"]) {
+      const p = resolve(__dirname, f);
+      if (existsSync(p)) {
+        try { copyFileSync(p, resolve(__dirname, outDir, f)); } catch {}
       }
     }
   },
@@ -21,7 +24,7 @@ export default defineConfig({
   plugins: [react(), copyExtensionFiles()],
   base: "./",
   build: {
-    outDir: "dist",
+    outDir: process.env.OUT_DIR || "dist",
     emptyOutDir: true,
     rollupOptions: {
       input: {

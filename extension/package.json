@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build"
+    "build": "vite build",
+    "build:chromium": "BROWSER_TARGET=chromium OUT_DIR=dist vite build",
+    "build:firefox": "BROWSER_TARGET=firefox OUT_DIR=dist-firefox vite build"
   },
   "dependencies": {
     "lucide-react": "^0.446.0",

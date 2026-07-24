@@ -258,8 +258,9 @@ function Home() {
 
   const T = (k: string) => tr(lang, k);
 
-  const download = () => {
-    fetch("/tab-bankruptcy.zip")
+  const download = (variant: "chromium" | "firefox" = "chromium") => {
+    const file = variant === "firefox" ? "tab-bankruptcy-firefox.zip" : "tab-bankruptcy-chromium.zip";
+    fetch(`/${file}`)
       .then((res) => {
         if (!res.ok) throw new Error(`Download failed: ${res.status}`);
         return res.blob();
@@ -267,7 +268,7 @@ function Home() {
       .then((blob) => {
         const a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
-        a.download = "tab-bankruptcy.zip";
+        a.download = file;
         a.click();
         URL.revokeObjectURL(a.href);
       })
@@ -334,11 +335,18 @@ function Home() {
 
         <div className="mt-8 flex flex-wrap gap-3">
           <button
-            onClick={download}
+            onClick={() => download("chromium")}
             className="inline-flex items-center gap-2 rounded-xl bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 px-5 py-3 font-semibold hover:opacity-90 active:scale-[0.98] transition"
           >
             <Download size={18} />
-            {T("download")}
+            Chrome / Edge / Brave / Kiwi
+          </button>
+          <button
+            onClick={() => download("firefox")}
+            className="inline-flex items-center gap-2 rounded-xl border border-neutral-200 dark:border-neutral-800 px-5 py-3 font-semibold hover:bg-neutral-100 dark:hover:bg-neutral-900 active:scale-[0.98] transition"
+          >
+            <Download size={18} />
+            Firefox
           </button>
           <a
             href="#install"
@@ -347,6 +355,9 @@ function Home() {
             {T("guide")}
           </a>
         </div>
+        <p className="mt-2 text-xs text-neutral-500">
+          Works on Chrome, Edge, Brave, Opera, Vivaldi, Arc, and Kiwi Browser (Android). Firefox build for Firefox &amp; Firefox for Android.
+        </p>
 
         {/* Features */}
         <section className="mt-16 grid gap-4 sm:grid-cols-3">
