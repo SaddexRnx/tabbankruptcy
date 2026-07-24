@@ -2,16 +2,17 @@ import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import {
   Landmark, History, Sun, Moon, Search, Download, Upload, Settings,
   Keyboard, RotateCcw, Trash2, Undo2, X, ExternalLink,
-  Archive, Ghost, Zap, AlertTriangle,
+  Archive, Ghost, Zap, AlertTriangle, Lock, PanelRight, Activity as ActivityIcon,
 } from "lucide-react";
 import Dashboard from "./components/Dashboard.jsx";
 import BankruptcyButton from "./components/BankruptcyButton.jsx";
 import SessionList from "./components/SessionList.jsx";
 import { LANGUAGES, t } from "./i18n.js";
 import {
-  STORAGE_KEY, SETTINGS_KEY, DEFAULT_SETTINGS,
+  STORAGE_KEY, SETTINGS_KEY, ACTIVITY_KEY, DEFAULT_SETTINGS,
   isExtension, getItem, setItem, queryTabs, queryAllTabs, buildName,
   shouldIncludeTab, upgradeSession, pushRevision, CURRENT_SESSION_VERSION,
+  hashPin, logActivity,
 } from "./storage.js";
 
 const UNDO_WINDOW_MS = 12000;
@@ -29,6 +30,10 @@ export default function App() {
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [undoState, setUndoState] = useState(null);
   const [, setUndoTick] = useState(0);
+  const [locked, setLocked] = useState(false);
+  const [pinInput, setPinInput] = useState("");
+  const [pinErr, setPinErr] = useState(false);
+  const [activity, setActivity] = useState([]);
   const fileRef = useRef(null);
   const toastTimerRef = useRef(null);
   const undoTimerRef = useRef(null);
@@ -37,8 +42,8 @@ export default function App() {
   const tt = useCallback((k, v) => t(lang, k, v), [lang]);
 
   const refresh = useCallback(async () => {
-    const [tabs, savedRaw, s] = await Promise.all([
-      queryTabs(), getItem(STORAGE_KEY, []), getItem(SETTINGS_KEY, {}),
+    const [tabs, savedRaw, s, act] = await Promise.all([
+      queryTabs(), getItem(STORAGE_KEY, []), getItem(SETTINGS_KEY, {}), getItem(ACTIVITY_KEY, []),
     ]);
     const merged = { ...DEFAULT_SETTINGS, ...s };
     setSettings(merged);
@@ -46,8 +51,36 @@ export default function App() {
     const eligible = tabs.filter((tb) => shouldIncludeTab(tb, merged));
     setTabCount(eligible.length);
     setSessions(saved.sort((a, b) => b.createdAt - a.createdAt));
+    setActivity(Array.isArray(act) ? act : []);
+    // PIN gate: lock unless this popup session already unlocked
+    const unlocked = sessionStorage.getItem("tb_unlocked") === "1";
+    setLocked(!!merged.pinEnabled && !unlocked);
   }, []);
   useEffect(() => { refresh(); }, [refresh]);
+
+  const tryUnlock = async () => {
+    if (!settings.pinSalt || !settings.pinHash) { setLocked(false); return; }
+    const { hash } = await hashPin(pinInput, settings.pinSalt);
+    if (hash === settings.pinHash) {
+      sessionStorage.setItem("tb_unlocked", "1");
+      setLocked(false); setPinInput(""); setPinErr(false);
+    } else { setPinErr(true); setPinInput(""); }
+  };
+
+  const openSidePanel = async () => {
+    if (!isExtension) return;
+    try {
+      if (chrome.sidePanel?.open) {
+        const win = await new Promise((r) => chrome.windows.getCurrent((w) => r(w)));
+        await chrome.sidePanel.open({ windowId: win.id });
+        window.close();
+      } else if (chrome.sidebarAction?.open) {
+        chrome.sidebarAction.open();
+      } else {
+        flash("Side panel not available in this browser.");
+      }
+    } catch (e) { flash("Couldn't open side panel."); }
+  };
 
   useEffect(() => {
     const apply = () => {
@@ -99,6 +132,8 @@ export default function App() {
       tabs: savable.map((tb) => ({ url: tb.url, title: tb.title || tb.url, favIconUrl: tb.favIconUrl || "" })),
     };
     await persistSessions([session, ...sessions]);
+    await logActivity("declare", { name: session.name, tabs: savable.length });
+    refresh();
     if (isExtension) {
       chrome.tabs.create({ url: "about:blank" }, (freshTab) => {
         const toClose = tabs.filter((tb) => tb.id !== freshTab.id && !(settings.ignorePinned && tb.pinned)).map((tb) => tb.id);
@@ -119,6 +154,8 @@ export default function App() {
     if (!isExtension) { flash("Restore only works inside the extension."); return; }
     const urls = await filterDedup(session.tabs.map((tb) => tb.url));
     if (!urls.length) { flash(tt("nothingToRestore")); return; }
+    await logActivity("restore", { name: session.name, tabs: urls.length });
+    refresh();
     const useWindow = forceNewWindow || settings.restoreInNewWindow;
     if (useWindow && chrome.windows?.create) {
       chrome.windows.create({ url: urls }, (win) => {
@@ -160,6 +197,7 @@ export default function App() {
     const next = sessions.filter((s) => s.id !== id);
     await persistSessions(next);
     setSelectedIds((prev) => { const n = new Set(prev); n.delete(id); return n; });
+    if (target) { await logActivity("delete", { name: target.name }); refresh(); }
     if (target) armUndo({ kind: "delete", sessions: [target], label: tt("undoDelete", { n: 1 }) });
     else flash(tt("sessionDeleted"));
   };
@@ -336,6 +374,30 @@ export default function App() {
 
   const secondsLeft = undoState ? Math.max(0, Math.ceil((undoState.expiresAt - Date.now()) / 1000)) : 0;
 
+  if (locked) {
+    return (
+      <div className="w-[400px] h-[600px] flex flex-col items-center justify-center gap-4 bg-white text-neutral-900 dark:bg-neutral-950 dark:text-neutral-50 p-6">
+        <div className="w-12 h-12 rounded-2xl bg-neutral-900 dark:bg-white flex items-center justify-center">
+          <Lock size={20} className="text-white dark:text-neutral-900" />
+        </div>
+        <div className="text-center">
+          <h1 className="text-sm font-semibold">TabBankruptcy</h1>
+          <p className="text-xs text-neutral-500 mt-1">Enter your PIN to unlock</p>
+        </div>
+        <input
+          type="password" inputMode="numeric" autoFocus
+          value={pinInput}
+          onChange={(e) => { setPinInput(e.target.value); setPinErr(false); }}
+          onKeyDown={(e) => e.key === "Enter" && tryUnlock()}
+          className="w-40 text-center tracking-[0.4em] text-lg py-2 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white"
+          aria-label="PIN"
+        />
+        {pinErr && <p className="text-[11px] text-red-600 dark:text-red-400">Incorrect PIN</p>}
+        <button onClick={tryUnlock} className="text-xs px-4 py-1.5 rounded-md bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 font-medium">Unlock</button>
+      </div>
+    );
+  }
+
   return (
     <div className="w-[400px] h-[600px] flex flex-col bg-white text-neutral-900 dark:bg-neutral-950 dark:text-neutral-50 relative">
       <a href="#tb-main" className="sr-only focus:not-sr-only focus:absolute focus:top-1 focus:left-1 focus:z-50 focus:px-2 focus:py-1 focus:bg-neutral-900 focus:text-white dark:focus:bg-white dark:focus:text-neutral-900 focus:rounded">{tt("skipToContent")}</a>
@@ -351,6 +413,9 @@ export default function App() {
           </div>
         </div>
         <div className="flex items-center gap-1">
+          {isExtension && (
+            <IconBtn onClick={openSidePanel} label="Open side panel"><PanelRight size={14} aria-hidden="true" /></IconBtn>
+          )}
           <IconBtn onClick={toggleTheme} label={`${tt("theme")}: ${settings.theme}`}>
             {settings.theme === "dark" ? <Moon size={14} aria-hidden="true" /> : <Sun size={14} aria-hidden="true" />}
           </IconBtn>
@@ -382,10 +447,34 @@ export default function App() {
             <span className="ml-1 rounded-full bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 px-1.5 py-0.5 text-[9px]">{sessions.length}</span>
           )}
         </NavBtn>
+        <NavBtn active={view === "activity"} onClick={() => setView("activity")}>
+          <ActivityIcon size={12} className="inline mr-1 -mt-0.5" aria-hidden="true" />
+          Activity
+        </NavBtn>
       </nav>
 
       <main id="tb-main" className="flex-1 overflow-y-auto tb-scroll" tabIndex={-1}>
-        {view === "home" ? (
+        {view === "activity" ? (
+          <div className="p-3 space-y-1">
+            {activity.length === 0 && <p className="text-xs text-neutral-500 p-3">No activity yet.</p>}
+            {activity.map((a) => (
+              <div key={a.id} className="flex items-start justify-between gap-2 px-2 py-1.5 rounded-md text-[11px] border border-neutral-200 dark:border-neutral-800">
+                <div className="min-w-0">
+                  <div className="font-medium capitalize">{a.type.replace(/_/g, " ")}</div>
+                  {a.name && <div className="text-neutral-500 truncate">{a.name}</div>}
+                  {typeof a.tabs === "number" && <div className="text-neutral-500">{a.tabs} tab{a.tabs === 1 ? "" : "s"}</div>}
+                </div>
+                <div className="text-[10px] text-neutral-500 shrink-0">{new Date(a.at).toLocaleString()}</div>
+              </div>
+            ))}
+            {activity.length > 0 && (
+              <button onClick={async () => { await setItem(ACTIVITY_KEY, []); refresh(); }}
+                className="mt-2 w-full text-[11px] text-neutral-600 dark:text-neutral-400 hover:underline">
+                Clear activity
+              </button>
+            )}
+          </div>
+        ) : view === "home" ? (
           <div className="p-4 space-y-4">
             <Dashboard tabCount={tabCount} sessionCount={sessions.length} t={tt} />
             <BankruptcyButton tabCount={tabCount} onDeclare={declareBankruptcy} confirmBeforeClose={settings.confirmBeforeClose} t={tt} />

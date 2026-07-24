@@ -1,6 +1,8 @@
 export const STORAGE_KEY = "tb_sessions";
 export const SETTINGS_KEY = "tb_settings";
 export const AUTO_ARCHIVE_KEY = "tb_auto_archive";
+export const ACTIVITY_KEY = "tb_activity";
+export const ACTIVITY_MAX = 500;
 
 export const DEFAULT_SETTINGS = {
   namePrefix: "Session",
@@ -42,7 +44,38 @@ export const DEFAULT_SETTINGS = {
   ghostScanFrequency: "off", // off | daily | weekly
   ghostScanTime: "09:00",
   ghostScanNotify: true,
+  // PIN lock (optional)
+  pinEnabled: false,
+  pinSalt: "",
+  pinHash: "",
+  // Google Drive backup
+  driveClientId: "",
 };
+
+// Hash a PIN with PBKDF2-SHA256 (100k iterations) + salt. Returns hex hash + hex salt.
+export async function hashPin(pin, saltHex) {
+  const enc = new TextEncoder();
+  const salt = saltHex
+    ? Uint8Array.from(saltHex.match(/.{1,2}/g).map((b) => parseInt(b, 16)))
+    : crypto.getRandomValues(new Uint8Array(16));
+  const key = await crypto.subtle.importKey("raw", enc.encode(pin), "PBKDF2", false, ["deriveBits"]);
+  const bits = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", salt, iterations: 100000, hash: "SHA-256" }, key, 256,
+  );
+  const hex = [...new Uint8Array(bits)].map((b) => b.toString(16).padStart(2, "0")).join("");
+  const saltOut = [...salt].map((b) => b.toString(16).padStart(2, "0")).join("");
+  return { hash: hex, salt: saltOut };
+}
+
+// Log an activity entry to tb_activity (capped)
+export async function logActivity(type, payload = {}) {
+  try {
+    const prev = await getItem(ACTIVITY_KEY, []);
+    const entry = { id: crypto.randomUUID(), at: Date.now(), type, ...payload };
+    const next = [entry, ...prev].slice(0, ACTIVITY_MAX);
+    await setItem(ACTIVITY_KEY, next);
+  } catch {}
+}
 
 
 

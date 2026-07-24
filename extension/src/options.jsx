@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import ReactDOM from "react-dom/client";
-import { Settings, Save, Check, CloudUpload, CloudDownload } from "lucide-react";
-import { SETTINGS_KEY, STORAGE_KEY, DEFAULT_SETTINGS, getItem, setItem, isExtension } from "./storage.js";
+import { Settings, Save, Check, CloudUpload, CloudDownload, Lock, HardDrive } from "lucide-react";
+import { SETTINGS_KEY, STORAGE_KEY, DEFAULT_SETTINGS, getItem, setItem, isExtension, hashPin } from "./storage.js";
 import { LANGUAGES, t } from "./i18n.js";
 import "./index.css";
 
@@ -268,6 +268,86 @@ function Options() {
               </p>
             </div>
           </Section>
+
+          <Section title="PIN lock (optional)" icon={<Lock size={14} aria-hidden="true" />}>
+            <p className="text-xs text-neutral-500">
+              Require a PIN every time the popup opens. Stored as a salted SHA-256 hash locally — never sent anywhere.
+              If you forget it, disable PIN by resetting the extension's storage.
+            </p>
+            <Toggle label="Require PIN to open the extension" checked={s.pinEnabled} onChange={(v) => update({ pinEnabled: v })} />
+            {s.pinEnabled && (
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="New PIN (4–12 chars)">
+                  <input id="tb-pin-new" type="password" inputMode="numeric" className="input" />
+                </Field>
+                <Field label="Confirm PIN">
+                  <input id="tb-pin-conf" type="password" inputMode="numeric" className="input" />
+                </Field>
+                <div className="col-span-2 flex gap-2">
+                  <button type="button" className="btn-sec" onClick={async () => {
+                    const a = document.getElementById("tb-pin-new").value;
+                    const b = document.getElementById("tb-pin-conf").value;
+                    if (!a || a.length < 4) { setMsg("PIN must be at least 4 characters."); return; }
+                    if (a !== b) { setMsg("PINs do not match."); return; }
+                    const { hash, salt } = await hashPin(a, "");
+                    update({ pinHash: hash, pinSalt: salt });
+                    document.getElementById("tb-pin-new").value = "";
+                    document.getElementById("tb-pin-conf").value = "";
+                    setMsg("PIN set. Save settings to apply.");
+                  }}>Set PIN</button>
+                  {s.pinHash && (
+                    <button type="button" className="btn-sec" onClick={() => {
+                      update({ pinHash: "", pinSalt: "", pinEnabled: false });
+                      setMsg("PIN cleared. Save settings to apply.");
+                    }}>Clear PIN</button>
+                  )}
+                  {s.pinHash && <span className="text-xs text-neutral-500 self-center">PIN is currently set.</span>}
+                </div>
+              </div>
+            )}
+          </Section>
+
+          <Section title="Google Drive backup" icon={<HardDrive size={14} aria-hidden="true" />}>
+            <p className="text-xs text-neutral-500">
+              Store a private backup in your own Google account (Drive appDataFolder — hidden from other apps).
+              Paste your OAuth 2.0 <b>Web Client ID</b> from Google Cloud Console. Add this redirect URI to that client:
+            </p>
+            <code className="block text-[11px] p-2 rounded bg-neutral-100 dark:bg-neutral-900 break-all">
+              {isExtension && chrome.identity?.getRedirectURL ? chrome.identity.getRedirectURL() : "https://<your-extension-id>.chromiumapp.org/"}
+            </code>
+            <Field label="Google OAuth Web Client ID">
+              <input type="text" placeholder="xxxxxxxxxxxx.apps.googleusercontent.com"
+                value={s.driveClientId} onChange={(e) => update({ driveClientId: e.target.value })} className="input" />
+            </Field>
+            <div className="flex gap-2">
+              <button type="button" className="btn-sec" disabled={!s.driveClientId || busy === "drive_backup"}
+                onClick={async () => {
+                  setBusy("drive_backup");
+                  const r = await new Promise((res) => chrome.runtime.sendMessage({ type: "DRIVE_BACKUP" }, res));
+                  setBusy(null);
+                  setMsg(r?.ok ? `Backed up ${r.count} sessions to Google Drive.` : `Backup failed: ${r?.error || "unknown"}`);
+                }}>
+                <CloudUpload size={13} aria-hidden="true" /> Back up to Google Drive
+              </button>
+              <button type="button" className="btn-sec" disabled={!s.driveClientId || busy === "drive_restore"}
+                onClick={async () => {
+                  if (!confirm("Restore sessions from Google Drive? This will merge with your existing sessions.")) return;
+                  setBusy("drive_restore");
+                  const r = await new Promise((res) => chrome.runtime.sendMessage({ type: "DRIVE_RESTORE" }, res));
+                  if (r?.ok && Array.isArray(r.sessions)) {
+                    const existing = await getItem(STORAGE_KEY, []);
+                    const byId = new Map(existing.map((x) => [x.id, x]));
+                    for (const s of r.sessions) if (!byId.has(s.id)) byId.set(s.id, s);
+                    await setItem(STORAGE_KEY, [...byId.values()].sort((a, b) => b.createdAt - a.createdAt));
+                    setMsg(`Restored ${r.sessions.length} sessions.`);
+                  } else setMsg(`Restore failed: ${r?.error || "unknown"}`);
+                  setBusy(null);
+                }}>
+                <CloudDownload size={13} aria-hidden="true" /> Restore from Google Drive
+              </button>
+            </div>
+          </Section>
+
 
           <div className="flex items-center gap-3">
             <button onClick={save}

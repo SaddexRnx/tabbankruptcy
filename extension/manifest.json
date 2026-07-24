@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
   "name": "TabBankruptcy",
-  "version": "1.4.0",
+  "version": "1.6.0",
   "description": "Save every open tab into a versioned session, close them, restore later. Auto-Archive idle tabs to a side panel and nuke RAM-hogging ghost tabs.",
-  "permissions": ["tabs", "storage", "downloads", "alarms", "sidePanel", "notifications"],
+  "permissions": ["tabs", "storage", "downloads", "alarms", "sidePanel", "notifications", "identity"],
   "host_permissions": ["<all_urls>"],
   "background": { "service_worker": "background.js" },
   "action": {
