@@ -423,10 +423,34 @@ export default function App() {
             <span className="ml-1 rounded-full bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 px-1.5 py-0.5 text-[9px]">{sessions.length}</span>
           )}
         </NavBtn>
+        <NavBtn active={view === "activity"} onClick={() => setView("activity")}>
+          <ActivityIcon size={12} className="inline mr-1 -mt-0.5" aria-hidden="true" />
+          Activity
+        </NavBtn>
       </nav>
 
       <main id="tb-main" className="flex-1 overflow-y-auto tb-scroll" tabIndex={-1}>
-        {view === "home" ? (
+        {view === "activity" ? (
+          <div className="p-3 space-y-1">
+            {activity.length === 0 && <p className="text-xs text-neutral-500 p-3">No activity yet.</p>}
+            {activity.map((a) => (
+              <div key={a.id} className="flex items-start justify-between gap-2 px-2 py-1.5 rounded-md text-[11px] border border-neutral-200 dark:border-neutral-800">
+                <div className="min-w-0">
+                  <div className="font-medium capitalize">{a.type.replace(/_/g, " ")}</div>
+                  {a.name && <div className="text-neutral-500 truncate">{a.name}</div>}
+                  {typeof a.tabs === "number" && <div className="text-neutral-500">{a.tabs} tab{a.tabs === 1 ? "" : "s"}</div>}
+                </div>
+                <div className="text-[10px] text-neutral-500 shrink-0">{new Date(a.at).toLocaleString()}</div>
+              </div>
+            ))}
+            {activity.length > 0 && (
+              <button onClick={async () => { await setItem(ACTIVITY_KEY, []); refresh(); }}
+                className="mt-2 w-full text-[11px] text-neutral-600 dark:text-neutral-400 hover:underline">
+                Clear activity
+              </button>
+            )}
+          </div>
+        ) : view === "home" ? (
           <div className="p-4 space-y-4">
             <Dashboard tabCount={tabCount} sessionCount={sessions.length} t={tt} />
             <BankruptcyButton tabCount={tabCount} onDeclare={declareBankruptcy} confirmBeforeClose={settings.confirmBeforeClose} t={tt} />
