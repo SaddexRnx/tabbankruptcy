@@ -864,6 +864,9 @@ function Home() {
               <FAQ q={T("faq3q")}>{T("faq3a")}</FAQ>
               <FAQ q={T("faq4q")}>{T("faq4a")}</FAQ>
               <FAQ q={T("faq5q")}>{T("faq5a")}</FAQ>
+              <FAQ q={T("faq6q")}>{T("faq6a")}</FAQ>
+              <FAQ q={T("faq7q")}>{T("faq7a")}</FAQ>
+              <FAQ q={T("faq8q")}>{T("faq8a")}</FAQ>
             </div>
           </div>
         </section>
