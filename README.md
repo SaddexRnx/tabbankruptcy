@@ -88,3 +88,33 @@ Everything runs locally in your browser. No analytics, no external servers. Goog
 ## License
 
 MIT
+
+## Contributing
+
+Issues and pull requests are welcome. If you have an idea, a bug, or a translation improvement — open one.
+
+## Acknowledgements
+
+- Everyone who tested early builds and reported ghost tabs
+- [TanStack](https://tanstack.com) for Start & Router
+- [Tailwind CSS](https://tailwindcss.com) and [Lucide](https://lucide.dev) for the UI toolkit
+- [Vite](https://vitejs.dev) for the build tooling
+- The Chromium and Firefox extension teams for solid MV3 docs
+
+## Contact
+
+Questions, feedback, or just want to say hi? DM me on Telegram:
+
+<p>
+  <a href="https://t.me/Saddex_x">
+    <img src="https://img.shields.io/badge/Telegram-@Saddex__x-26A5E4?logo=telegram&logoColor=white&style=for-the-badge" alt="Telegram @Saddex_x" />
+  </a>
+</p>
+
+---
+
+<div align="center">
+
+Made with care · If TabBankruptcy saved your RAM, consider giving the repo a ⭐
+
+</div>
