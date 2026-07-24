@@ -342,24 +342,28 @@ const scanGhosts = async () => {
 };
 
 const nukeGhosts = async (ids) => {
-  if (!Array.isArray(ids) || !ids.length) return { ok: true, archived: 0 };
+  if (!Array.isArray(ids) || !ids.length) return { ok: true, archived: 0, tabs: [] };
   const tabs = await new Promise((r) => chrome.tabs.query({}, (t) => r(t || [])));
   const map = new Map(tabs.map((t) => [t.id, t]));
   const captured = ids.map((id) => map.get(id)).filter(Boolean);
+  const tabPayload = captured.map((t) => ({ url: t.url, title: t.title || t.url, favIconUrl: t.favIconUrl || "" }));
+  let sessionId = null;
   if (captured.length) {
     const sessions = await get(STORAGE_KEY, []);
+    sessionId = crypto.randomUUID();
     const session = {
-      id: crypto.randomUUID(),
+      id: sessionId,
       name: `Ghosts — ${new Date().toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}`,
       createdAt: Date.now(), updatedAt: Date.now(),
       version: CURRENT_SESSION_VERSION, notes: "Ghost tabs nuked from Ghost Checker", tags: ["ghosts"], revisions: [],
-      tabs: captured.map((t) => ({ url: t.url, title: t.title || t.url, favIconUrl: t.favIconUrl || "" })),
+      tabs: tabPayload,
     };
     await set(STORAGE_KEY, [session, ...sessions]);
   }
   await new Promise((r) => chrome.tabs.remove(ids, r));
-  return { ok: true, archived: captured.length };
+  return { ok: true, archived: captured.length, sessionId, tabs: tabPayload };
 };
+
 
 // ---- Lifecycle ----
 chrome.runtime.onInstalled.addListener(async (details) => {
