@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import ReactDOM from "react-dom/client";
-import { Settings, Save, Check, CloudUpload, CloudDownload } from "lucide-react";
-import { SETTINGS_KEY, STORAGE_KEY, DEFAULT_SETTINGS, getItem, setItem, isExtension } from "./storage.js";
+import { Settings, Save, Check, CloudUpload, CloudDownload, Lock, HardDrive } from "lucide-react";
+import { SETTINGS_KEY, STORAGE_KEY, DEFAULT_SETTINGS, getItem, setItem, isExtension, hashPin } from "./storage.js";
 import { LANGUAGES, t } from "./i18n.js";
 import "./index.css";
 
