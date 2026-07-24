@@ -8,6 +8,16 @@
 
 A privacy-first Chrome & Firefox extension (Manifest V3) that helps you tame tab hoarding with one click — plus a beautiful landing page built with TanStack Start.
 
+[![Chrome](https://img.shields.io/badge/Chrome-Manifest%20V3-4285F4?logo=googlechrome&logoColor=white)](public/tab-bankruptcy-chromium.zip)
+[![Firefox](https://img.shields.io/badge/Firefox-Add--on-FF7139?logo=firefoxbrowser&logoColor=white)](public/tab-bankruptcy-firefox.zip)
+[![TanStack Start](https://img.shields.io/badge/TanStack-Start-EF4444?logo=react&logoColor=white)](https://tanstack.com/start)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
+[![Vite](https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white)](https://vitejs.dev)
+[![License: MIT](https://img.shields.io/badge/License-MIT-000000.svg)](#license)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#contributing)
+
 [Install Chromium](public/tab-bankruptcy-chromium.zip) · [Install Firefox](public/tab-bankruptcy-firefox.zip) · [Live site](https://tabbankruptcy.lovable.app)
 
 </div>
@@ -78,3 +88,33 @@ Everything runs locally in your browser. No analytics, no external servers. Goog
 ## License
 
 MIT
+
+## Contributing
+
+Issues and pull requests are welcome. If you have an idea, a bug, or a translation improvement — open one.
+
+## Acknowledgements
+
+- Everyone who tested early builds and reported ghost tabs
+- [TanStack](https://tanstack.com) for Start & Router
+- [Tailwind CSS](https://tailwindcss.com) and [Lucide](https://lucide.dev) for the UI toolkit
+- [Vite](https://vitejs.dev) for the build tooling
+- The Chromium and Firefox extension teams for solid MV3 docs
+
+## Contact
+
+Questions, feedback, or just want to say hi? DM me on Telegram:
+
+<p>
+  <a href="https://t.me/Saddex_x">
+    <img src="https://img.shields.io/badge/Telegram-@Saddex__x-26A5E4?logo=telegram&logoColor=white&style=for-the-badge" alt="Telegram @Saddex_x" />
+  </a>
+</p>
+
+---
+
+<div align="center">
+
+Made with care · If TabBankruptcy saved your RAM, consider giving the repo a ⭐
+
+</div>
