@@ -294,16 +294,21 @@ function Home() {
             </a>
           </div>
 
-          <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] text-neutral-500">
-            <Chip>Chrome</Chip>
-            <Chip>Edge</Chip>
-            <Chip>Brave</Chip>
-            <Chip>Opera</Chip>
-            <Chip>Vivaldi</Chip>
-            <Chip>Arc</Chip>
-            <Chip>Kiwi (Android)</Chip>
-            <Chip>Firefox</Chip>
-            <Chip>Firefox for Android</Chip>
+          <div className="mt-8">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-neutral-500 mb-2">
+              Works on your browser
+            </p>
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-2 text-[11px] text-neutral-500">
+              <Chip>Chrome</Chip>
+              <Chip>Edge</Chip>
+              <Chip>Brave</Chip>
+              <Chip>Opera</Chip>
+              <Chip>Vivaldi</Chip>
+              <Chip>Arc</Chip>
+              <Chip>Kiwi (Android)</Chip>
+              <Chip>Firefox</Chip>
+              <Chip>Firefox for Android</Chip>
+            </div>
           </div>
         </div>
       </section>
