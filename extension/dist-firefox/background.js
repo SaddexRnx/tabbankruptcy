@@ -8,6 +8,8 @@ const AUTO_ARCHIVE_KEY = "tb_auto_archive";
 const AUTO_EXPORT_ALARM = "tb_auto_export";
 const AUTO_ARCHIVE_ALARM = "tb_auto_archive";
 const CLOUD_PUSH_ALARM = "tb_cloud_push";
+const GHOST_SCAN_ALARM = "tb_ghost_scan";
+
 const CURRENT_SESSION_VERSION = 2;
 
 const DEFAULT_SETTINGS = {
