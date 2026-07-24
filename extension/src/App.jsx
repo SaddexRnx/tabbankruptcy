@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import {
   Landmark, History, Sun, Moon, Search, Download, Upload, Settings,
   Keyboard, RotateCcw, Trash2, Undo2, X, ExternalLink,
+  Archive, Ghost, Zap, AlertTriangle,
 } from "lucide-react";
 import Dashboard from "./components/Dashboard.jsx";
 import BankruptcyButton from "./components/BankruptcyButton.jsx";
@@ -380,6 +381,10 @@ export default function App() {
             <Dashboard tabCount={tabCount} sessionCount={sessions.length} t={tt} />
             <BankruptcyButton tabCount={tabCount} onDeclare={declareBankruptcy} confirmBeforeClose={settings.confirmBeforeClose} t={tt} />
             <p className="text-[11px] text-neutral-500 leading-relaxed px-1">{tt("intro")}</p>
+
+            <AutoArchiveCard settings={settings} setSettings={setSettings} t={tt} flash={flash} />
+            <GhostCheckerCard settings={settings} setSettings={setSettings} t={tt} flash={flash} refresh={refresh} />
+
             <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 p-3">
               <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-neutral-500">
                 <Keyboard size={12} aria-hidden="true" /> {tt("shortcuts")}
