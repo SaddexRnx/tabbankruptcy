@@ -8,6 +8,7 @@ const AUTO_ARCHIVE_KEY = "tb_auto_archive";
 const AUTO_EXPORT_ALARM = "tb_auto_export";
 const AUTO_ARCHIVE_ALARM = "tb_auto_archive";
 const CLOUD_PUSH_ALARM = "tb_cloud_push";
+const GHOST_SCAN_ALARM = "tb_ghost_scan";
 const CURRENT_SESSION_VERSION = 2;
 
 const DEFAULT_SETTINGS = {
@@ -19,8 +20,15 @@ const DEFAULT_SETTINGS = {
   dedupOnRestore: true, restoreInNewWindow: false,
   syncToStorageSync: false, cloudEndpointUrl: "", cloudEndpointToken: "", cloudAutoPush: false,
   autoArchive: { enabled: false, idleMinutes: 30, keepPinned: true, keepAudible: true, max: 300 },
+  autoArchiveExcludeDomains: "", autoArchiveKeepDomains: "",
   skipGhostConfirm: false, ghostIdleMinutes: 60,
+  ghostScanFrequency: "off", ghostScanTime: "09:00", ghostScanNotify: true,
 };
+
+const parseDomains = (txt) => (txt || "").split(/[\n,]/).map((s) => s.trim().toLowerCase()).filter(Boolean);
+const hostOf = (u) => { try { return new URL(u).hostname.toLowerCase(); } catch { return ""; } };
+const matchesDomain = (host, list) => host && list.some((d) => host === d || host.endsWith("." + d));
+
 
 const get = (key, fallback) =>
   new Promise((resolve) => chrome.storage.local.get([key], (r) => resolve(r[key] ?? fallback)));
