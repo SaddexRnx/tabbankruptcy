@@ -1,11 +1,19 @@
-import { useState } from "react";
-import { RotateCcw, Trash2, ChevronDown, ChevronRight, Inbox } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { RotateCcw, Trash2, ChevronDown, ChevronRight, Inbox, Tag, StickyNote, X, Check } from "lucide-react";
 
-export default function SessionList({ sessions, onRestore, onDelete, t }) {
+export default function SessionList({
+  sessions,
+  onRestore,
+  onDelete,
+  onUpdate,
+  selectedIds,
+  onToggleSelect,
+  t,
+}) {
   if (sessions.length === 0) {
     return (
       <div className="h-64 flex flex-col items-center justify-center text-center px-6 text-neutral-500">
-        <Inbox size={28} className="mb-2 text-neutral-400" />
+        <Inbox size={28} className="mb-2 text-neutral-400" aria-hidden="true" />
         <p className="text-sm">{t("noSessions")}</p>
         <p className="text-[11px] mt-1">{t("whenYouDeclare")}</p>
       </div>
@@ -13,67 +21,190 @@ export default function SessionList({ sessions, onRestore, onDelete, t }) {
   }
 
   return (
-    <div className="space-y-2">
+    <ul className="space-y-2" role="list" aria-label={t("sessions")}>
       {sessions.map((s) => (
-        <SessionCard
-          key={s.id}
-          session={s}
-          onRestore={() => onRestore(s)}
-          onDelete={() => onDelete(s.id)}
-          t={t}
-        />
+        <li key={s.id}>
+          <SessionCard
+            session={s}
+            selected={selectedIds?.has(s.id)}
+            onToggleSelect={() => onToggleSelect(s.id)}
+            onRestore={() => onRestore(s)}
+            onDelete={() => onDelete(s.id)}
+            onUpdate={(patch) => onUpdate(s.id, patch)}
+            t={t}
+          />
+        </li>
       ))}
-    </div>
+    </ul>
   );
 }
 
-function SessionCard({ session, onRestore, onDelete, t }) {
+function SessionCard({ session, selected, onToggleSelect, onRestore, onDelete, onUpdate, t }) {
   const [open, setOpen] = useState(false);
   const [confirmDel, setConfirmDel] = useState(false);
+  const [editMeta, setEditMeta] = useState(false);
+  const [notes, setNotes] = useState(session.notes || "");
+  const [tagDraft, setTagDraft] = useState("");
+  const tags = session.tags || [];
+  const notesRef = useRef(null);
+
+  useEffect(() => {
+    if (editMeta && notesRef.current) notesRef.current.focus();
+  }, [editMeta]);
+
   const date = new Date(session.createdAt);
   const dateLabel = date.toLocaleString([], {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
+    month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
   });
 
+  const addTag = () => {
+    const v = tagDraft.trim().replace(/,/g, "");
+    if (!v) return;
+    if (tags.includes(v)) { setTagDraft(""); return; }
+    onUpdate({ tags: [...tags, v] });
+    setTagDraft("");
+  };
+  const removeTag = (tg) => onUpdate({ tags: tags.filter((x) => x !== tg) });
+  const saveNotes = () => { onUpdate({ notes }); setEditMeta(false); };
+
   return (
-    <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 overflow-hidden">
+    <div
+      className={`rounded-xl border overflow-hidden transition ${
+        selected
+          ? "border-neutral-900 dark:border-white ring-1 ring-neutral-900 dark:ring-white"
+          : "border-neutral-200 dark:border-neutral-800"
+      }`}
+    >
       <div className="flex items-center gap-2 p-2.5">
+        <input
+          type="checkbox"
+          checked={!!selected}
+          onChange={onToggleSelect}
+          aria-label={`${t("select")} ${session.name}`}
+          className="h-3.5 w-3.5 accent-neutral-900 dark:accent-white cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white rounded-sm"
+        />
         <button
           onClick={() => setOpen((v) => !v)}
-          className="p-1 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-900 text-neutral-500"
-          aria-label="Expand"
+          className="p-1 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-900 text-neutral-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white"
+          aria-label={open ? t("collapse") : t("expand")}
+          aria-expanded={open}
         >
-          {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+          {open ? <ChevronDown size={14} aria-hidden="true" /> : <ChevronRight size={14} aria-hidden="true" />}
         </button>
         <div className="flex-1 min-w-0">
           <div className="text-sm font-medium truncate">{session.name}</div>
           <div className="text-[11px] text-neutral-500">
             {session.tabs.length} {session.tabs.length === 1 ? t("tab") : t("tabs")} · {dateLabel}
           </div>
+          {(tags.length > 0 || session.notes) && !editMeta && (
+            <div className="flex flex-wrap items-center gap-1 mt-1">
+              {tags.map((tg) => (
+                <span
+                  key={tg}
+                  className="inline-flex items-center gap-0.5 rounded-full bg-neutral-100 dark:bg-neutral-800 text-[10px] px-1.5 py-0.5"
+                >
+                  <Tag size={8} aria-hidden="true" /> {tg}
+                </span>
+              ))}
+              {session.notes && (
+                <span className="inline-flex items-center gap-0.5 text-[10px] text-neutral-500" title={session.notes}>
+                  <StickyNote size={9} aria-hidden="true" />
+                  <span className="truncate max-w-[140px]">{session.notes}</span>
+                </span>
+              )}
+            </div>
+          )}
         </div>
         <button
-          onClick={onRestore}
-          title={t("restoreAll")}
-          className="p-1.5 rounded-md border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-900"
+          onClick={() => setEditMeta((v) => !v)}
+          aria-label={t("editMeta")}
+          title={t("editMeta")}
+          className="p-1.5 rounded-md border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white"
         >
-          <RotateCcw size={12} />
+          <StickyNote size={12} aria-hidden="true" />
+        </button>
+        <button
+          onClick={onRestore}
+          aria-label={t("restoreAll")}
+          title={t("restoreAll")}
+          className="p-1.5 rounded-md border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white"
+        >
+          <RotateCcw size={12} aria-hidden="true" />
         </button>
         <button
           onClick={() => (confirmDel ? onDelete() : setConfirmDel(true))}
           onMouseLeave={() => setConfirmDel(false)}
+          onBlur={() => setConfirmDel(false)}
+          aria-label={confirmDel ? t("clickAgain") : t("delete")}
           title={confirmDel ? t("clickAgain") : t("delete")}
-          className={`p-1.5 rounded-md border transition ${
+          className={`p-1.5 rounded-md border transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white ${
             confirmDel
               ? "bg-neutral-900 text-white border-neutral-900 dark:bg-white dark:text-neutral-900 dark:border-white"
               : "border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-900"
           }`}
         >
-          <Trash2 size={12} />
+          <Trash2 size={12} aria-hidden="true" />
         </button>
       </div>
+
+      {editMeta && (
+        <div className="border-t border-neutral-200 dark:border-neutral-800 p-2.5 space-y-2 bg-neutral-50 dark:bg-neutral-900">
+          <label className="block text-[10px] uppercase tracking-wide text-neutral-500" htmlFor={`notes-${session.id}`}>
+            {t("notes")}
+          </label>
+          <textarea
+            id={`notes-${session.id}`}
+            ref={notesRef}
+            rows={2}
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder={t("notesPlaceholder")}
+            className="w-full px-2 py-1.5 rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 text-xs outline-none focus:border-neutral-900 dark:focus:border-white resize-none"
+          />
+          <label className="block text-[10px] uppercase tracking-wide text-neutral-500" htmlFor={`tag-${session.id}`}>
+            {t("tags")}
+          </label>
+          <div className="flex flex-wrap items-center gap-1">
+            {tags.map((tg) => (
+              <span key={tg} className="inline-flex items-center gap-1 rounded-full bg-neutral-200 dark:bg-neutral-800 text-[10px] px-2 py-0.5">
+                {tg}
+                <button
+                  type="button"
+                  onClick={() => removeTag(tg)}
+                  aria-label={`${t("remove")} ${tg}`}
+                  className="hover:text-red-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neutral-900 dark:focus-visible:ring-white rounded-full"
+                >
+                  <X size={9} aria-hidden="true" />
+                </button>
+              </span>
+            ))}
+            <input
+              id={`tag-${session.id}`}
+              value={tagDraft}
+              onChange={(e) => setTagDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === ",") { e.preventDefault(); addTag(); }
+              }}
+              placeholder={t("addTag")}
+              className="flex-1 min-w-[80px] px-2 py-1 rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 text-[11px] outline-none focus:border-neutral-900 dark:focus:border-white"
+            />
+          </div>
+          <div className="flex gap-2 justify-end">
+            <button
+              onClick={() => { setNotes(session.notes || ""); setEditMeta(false); }}
+              className="px-2 py-1 rounded-md text-[11px] border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white"
+            >
+              {t("cancel")}
+            </button>
+            <button
+              onClick={saveNotes}
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-neutral-900 dark:focus-visible:ring-white"
+            >
+              <Check size={10} aria-hidden="true" /> {t("save")}
+            </button>
+          </div>
+        </div>
+      )}
 
       {open && (
         <ul className="border-t border-neutral-200 dark:border-neutral-800 max-h-56 overflow-y-auto tb-scroll">
@@ -90,11 +221,9 @@ function SessionCard({ session, onRestore, onDelete, t }) {
                   onError={(e) => (e.currentTarget.style.visibility = "hidden")}
                 />
               ) : (
-                <div className="w-3.5 h-3.5 rounded-sm bg-neutral-200 dark:bg-neutral-800 flex-shrink-0" />
+                <div className="w-3.5 h-3.5 rounded-sm bg-neutral-200 dark:bg-neutral-800 flex-shrink-0" aria-hidden="true" />
               )}
-              <span className="truncate flex-1" title={tab.title}>
-                {tab.title}
-              </span>
+              <span className="truncate flex-1" title={tab.title}>{tab.title}</span>
             </li>
           ))}
         </ul>
