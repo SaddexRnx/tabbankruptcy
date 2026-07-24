@@ -117,7 +117,17 @@ const dict = {
     reason_idle: "idle",
     reason_duplicate: "duplicate",
     ghostsNuked: "Nuked {n} ghost tabs. Archived to History.",
+    undoNuke: "Nuked {n} ghost tabs — undo to reopen.",
+    exportArchive: "Export archived tabs",
+    importArchive: "Import archived tabs",
+    archiveExported: "Exported {n} archived tabs.",
+    archiveImported: "Imported {n} archived tabs.",
+    filterHost: "Site",
+    filterAllHosts: "All sites",
+    ghostScanScheduled: "Scheduled ghost scan",
+    ghostScanRunNow: "Run scan now",
   },
+
   es: {
     tagline: "Alivio para tus pestañas",
     home: "Inicio", history: "Historial", settings: "Ajustes",
