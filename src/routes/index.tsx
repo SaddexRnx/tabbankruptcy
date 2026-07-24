@@ -415,7 +415,7 @@ function Home() {
 
 function Chip({ children }: { children: React.ReactNode }) {
   return (
-    <span className="inline-flex items-center rounded-full border border-neutral-200 dark:border-neutral-800 bg-white/70 dark:bg-neutral-900/70 px-2.5 py-0.5">
+    <span className="inline-flex items-center rounded-full border border-neutral-200 dark:border-neutral-800 bg-white/70 dark:bg-neutral-900/70 px-2.5 py-0.5 transition-all duration-300 hover:-translate-y-0.5 hover:border-neutral-900 dark:hover:border-white hover:text-neutral-900 dark:hover:text-white hover:shadow-sm cursor-default">
       {children}
     </span>
   );
@@ -431,14 +431,23 @@ function Feature({
   body: string;
 }) {
   return (
-    <div className="group rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5 hover:bg-neutral-50 dark:hover:bg-neutral-900/60 transition">
-      <div className="flex items-center gap-2 text-neutral-900 dark:text-neutral-50">
-        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-neutral-900 text-white dark:bg-white dark:text-neutral-900">
+    <div className="group relative rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5 bg-white dark:bg-neutral-950 overflow-hidden transition-all duration-500 ease-out hover:-translate-y-1 hover:shadow-[0_20px_40px_-20px_rgba(0,0,0,0.25)] dark:hover:shadow-[0_20px_40px_-20px_rgba(255,255,255,0.1)] hover:border-neutral-900 dark:hover:border-white">
+      {/* animated sheen */}
+      <div className="pointer-events-none absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out bg-gradient-to-r from-transparent via-neutral-900/[0.04] dark:via-white/[0.06] to-transparent" />
+      {/* corner glow */}
+      <div className="pointer-events-none absolute -top-8 -right-8 h-24 w-24 rounded-full bg-neutral-900/5 dark:bg-white/5 opacity-0 group-hover:opacity-100 blur-2xl transition-opacity duration-500" />
+
+      <div className="relative flex items-center gap-2 text-neutral-900 dark:text-neutral-50">
+        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 transition-transform duration-500 ease-out group-hover:scale-110 group-hover:-rotate-6 group-hover:shadow-md">
           {icon}
         </span>
-        <h4 className="text-sm font-semibold">{title}</h4>
+        <h4 className="text-sm font-semibold transition-transform duration-500 group-hover:translate-x-0.5">
+          {title}
+        </h4>
       </div>
-      <p className="mt-3 text-xs leading-relaxed text-neutral-600 dark:text-neutral-400">{body}</p>
+      <p className="relative mt-3 text-xs leading-relaxed text-neutral-600 dark:text-neutral-400 transition-colors duration-500 group-hover:text-neutral-800 dark:group-hover:text-neutral-200">
+        {body}
+      </p>
     </div>
   );
 }
