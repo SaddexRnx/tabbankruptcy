@@ -145,6 +145,27 @@ function Options() {
             </Field>
           </Section>
 
+          <Section title="Automatic export">
+            <Field label="Auto-export session history">
+              <select
+                value={s.autoExportFrequency}
+                onChange={(e) => update({ autoExportFrequency: e.target.value })}
+                className="input"
+                aria-describedby="autoexport-help"
+              >
+                <option value="off">Off</option>
+                <option value="hourly">Every hour</option>
+                <option value="daily">Every day</option>
+                <option value="weekly">Every week</option>
+              </select>
+            </Field>
+            <p id="autoexport-help" className="text-xs text-neutral-500">
+              Downloads a timestamped JSON backup to your default Downloads folder,
+              inside <span className="font-mono">tabbankruptcy-auto/</span>.
+              The browser must be running when the alarm fires.
+            </p>
+          </Section>
+
           <div className="flex items-center gap-3">
             <button
               onClick={save}

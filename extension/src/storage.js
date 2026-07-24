@@ -12,6 +12,7 @@ export const DEFAULT_SETTINGS = {
   excludePatterns: "",
   theme: "system",
   language: "en",
+  autoExportFrequency: "off",
 };
 
 export const isExtension =
