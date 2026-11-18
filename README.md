@@ -1,120 +1,74 @@
-<div align="center">
-
-<img src="public/favicon.png" alt="TabBankruptcy" width="96" height="96" />
-
 # TabBankruptcy
 
-**Declare bankruptcy on your tabs. Restore your sanity.**
+A Chrome and Firefox extension that saves all your open tabs as a named session, closes them, and lets you restore them later. No account, no server, no tracking.
 
-A privacy-first Chrome & Firefox extension (Manifest V3) that helps you tame tab hoarding with one click — plus a beautiful landing page built with TanStack Start.
+The landing page is built with TanStack Start and lives in `src/`.
 
-[![Chrome](https://img.shields.io/badge/Chrome-Manifest%20V3-4285F4?logo=googlechrome&logoColor=white)](public/tab-bankruptcy-chromium.zip)
-[![Firefox](https://img.shields.io/badge/Firefox-Add--on-FF7139?logo=firefoxbrowser&logoColor=white)](public/tab-bankruptcy-firefox.zip)
-[![TanStack Start](https://img.shields.io/badge/TanStack-Start-EF4444?logo=react&logoColor=white)](https://tanstack.com/start)
-[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
-[![Vite](https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white)](https://vitejs.dev)
-[![License: MIT](https://img.shields.io/badge/License-MIT-000000.svg)](#license)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#contributing)
+[Install for Chromium](public/tab-bankruptcy-chromium.zip) · [Install for Firefox](public/tab-bankruptcy-firefox.zip) · [Live site](https://tabbankruptcy.lovable.app)
 
-[Install Chromium](public/tab-bankruptcy-chromium.zip) · [Install Firefox](public/tab-bankruptcy-firefox.zip) · [Live site](https://tabbankruptcy.lovable.app)
+## Why I made it
 
-</div>
+I kept dozens of tabs open "for later" and never actually read them. Closing them all felt like losing something. This extension saves everything first, then gives you a clean slate. When you need a tab back, you restore the whole session or just the ones you want.
 
----
+Everything stays in your browser. The only thing that leaves your machine is an optional Google Drive backup, and that uses your own OAuth client ID so the extension never sees your credentials.
 
 ## What it does
 
-TabBankruptcy saves every open tab as a named session, then closes them all so you get a clean slate. Come back later and restore any session — fully, partially, or into a new window. No accounts. No tracking. Your data stays local (with optional Google Drive backup you control).
-
-## Features
-
-- **One-click bankruptcy** — save & close all tabs into a session
-- **Session history** — search, filter, tag, add notes, bulk restore/delete
-- **Versioning** — up to 20 recoverable revisions per session
-- **Undo window** — 12 seconds to revert declare/restore/nuke actions
-- **Auto-Archive** — idle tabs move to the side panel to free RAM
-- **Ghost Tab Checker** — find and nuke suspended/duplicate/idle tabs
-- **Per-domain rules** — always-pin or never-archive specific sites
-- **Scheduled exports & scans** — timezone-aware, with notifications
-- **Google Drive backup** — optional, uses your own OAuth Client ID, stored in `appDataFolder`
-- **PIN lock** — optional PBKDF2-SHA256 salted PIN
-- **Activity log** — full history of what the extension did
-- **Keyboard shortcuts** — `Ctrl+Shift+B` declare · `Ctrl+Shift+X` restore · `Ctrl+Shift+L` dashboard
-- **8 languages** — EN, ES, FR, DE, AR, ZH, PT, JA (extension + website)
-- **Modern UI** — minimalist monochrome, light & dark mode
+- Save and close all tabs in one click, then restore them fully or partially later
+- Search, tag, and filter sessions, add notes, and restore or delete in bulk
+- Keep up to 20 previous versions of a session
+- Undo a declare, restore, or delete for 12 seconds
+- Move idle tabs to the side panel to free up memory
+- Find and close duplicate, suspended, or idle tabs
+- Set per-domain rules to always pin or never archive certain sites
+- Schedule exports and scans, with notifications
+- Optional Google Drive backup using your own OAuth client
+- Optional PIN lock using PBKDF2-SHA256
+- A log of everything the extension did
+- Keyboard shortcuts: `Ctrl+Shift+B` to declare, `Ctrl+Shift+X` to restore, `Ctrl+Shift+L` for the dashboard
+- Eight languages: English, Spanish, French, German, Arabic, Chinese, Portuguese, Japanese
 
 ## Install
 
-### From the packaged builds
-1. Download `public/tab-bankruptcy-chromium.zip` (or `-firefox.zip`) and unzip it.
-2. **Chromium:** open `chrome://extensions`, enable *Developer mode*, click *Load unpacked*, select the folder.
-3. **Firefox:** open `about:debugging#/runtime/this-firefox`, click *Load Temporary Add-on*, pick `manifest.json`.
+Download the zip for your browser and unzip it.
 
-### Build from source
+For **Chrome, Edge, or Brave**, open `chrome://extensions`, turn on Developer mode, click "Load unpacked", and select the unzipped folder.
+
+For **Firefox**, open `about:debugging#/runtime/this-firefox`, click "Load Temporary Add-on", and pick `manifest.json`. Note that temporary add-ons disappear when Firefox restarts.
+
+To build from source:
+
 ```sh
 cd extension
 bun install
 bun run build:chromium   # or build:firefox
 ```
-Output lands in `extension/dist/` or `extension/dist-firefox/`.
 
-## Landing page
+The output lands in `extension/dist/` or `extension/dist-firefox/`.
 
-The marketing site lives in `src/routes/` and runs on TanStack Start + Tailwind CSS v4.
+## Run the landing page
 
 ```sh
 bun install
 bun run dev
 ```
 
-## Project layout
+## Layout
 
 ```
-extension/     Manifest V3 extension (React + Vite + Tailwind)
-src/           Landing page (TanStack Start)
-public/        Packaged extension zips & static assets
+extension/   Manifest V3 extension (React, Vite, Tailwind)
+src/         Landing page (TanStack Start)
+public/      Packaged extension zips and static assets
 ```
-
-## Tech
-
-TanStack Start · React 19 · TypeScript · Tailwind CSS v4 · Vite 7 · Manifest V3 · chrome.storage · chrome.alarms · chrome.sidePanel · chrome.identity
 
 ## Privacy
 
-Everything runs locally in your browser. No analytics, no external servers. Google Drive sync is opt-in and uses **your own** OAuth Client ID — the extension never sees your credentials.
+Everything runs locally. There is no analytics and no external server. Google Drive sync is opt-in and uses your own OAuth client ID.
 
 ## License
 
 MIT
 
-## Contributing
-
-Issues and pull requests are welcome. If you have an idea, a bug, or a translation improvement — open one.
-
-## Acknowledgements
-
-- Everyone who tested early builds and reported ghost tabs
-- [TanStack](https://tanstack.com) for Start & Router
-- [Tailwind CSS](https://tailwindcss.com) and [Lucide](https://lucide.dev) for the UI toolkit
-- [Vite](https://vitejs.dev) for the build tooling
-- The Chromium and Firefox extension teams for solid MV3 docs
-
 ## Contact
 
-Questions, feedback, or just want to say hi? DM me on Telegram:
-
-<p>
-  <a href="https://t.me/Saddex_x">
-    <img src="https://img.shields.io/badge/Telegram-@Saddex__x-26A5E4?logo=telegram&logoColor=white&style=for-the-badge" alt="Telegram @Saddex_x" />
-  </a>
-</p>
-
----
-
-<div align="center">
-
-Made with care · If TabBankruptcy saved your RAM, consider giving the repo a ⭐
-
-</div>
+Questions or feedback: [@Saddex_x](https://t.me/Saddex_x) on Telegram.
