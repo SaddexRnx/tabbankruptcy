@@ -6,6 +6,10 @@ The landing page is built with TanStack Start and lives in `src/`.
 
 [Install for Chromium](public/tab-bankruptcy-chromium.zip) · [Install for Firefox](public/tab-bankruptcy-firefox.zip) · [Live site](https://tabbankruptcy.lovable.app)
 
+## About
+
+I made this for myself first. I had too many tabs open and no good way to park them without losing them. It stays local because I don't think your browsing habits belong on someone else's server. I'm Saddek, a developer in Algeria. My other projects are at [saddexrnx.github.io](https://saddexrnx.github.io) and I'm reachable on [Telegram](https://t.me/Saddex_x).
+
 ## Why I made it
 
 I kept dozens of tabs open "for later" and never actually read them. Closing them all felt like losing something. This extension saves everything first, then gives you a clean slate. When you need a tab back, you restore the whole session or just the ones you want.
